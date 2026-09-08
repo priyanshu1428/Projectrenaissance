@@ -1,0 +1,43 @@
+{
+  "summary": "First-finish smoke test of Expedition Guardian. Backend auth, briefing (Gemini), phrases, and checklist endpoints all healthy. Frontend core flows (landing, login, dashboard, map, readiness, checklist, briefing render with all 4 blocks, custom item, save-to-vault, offline banner, logout) all pass. Two minor issues to flag.",
+  "tested_scope": ["frontend", "backend", "auth", "integration"],
+  "passed": [
+    "GET /api/auth/login returns JWT (admin@expedition.com)",
+    "GET /api/auth/me with Bearer works",
+    "GET /api/checklist/template returns categorized items",
+    "POST /api/briefing (Chamonix) returns full dossier via Gemini (~15s)",
+    "POST /api/phrases (Chamonix, French) returns emergency/navigation/medical arrays",
+    "Landing page loads with hero 'Prepare Online. Operate Offline.' and sample dossier",
+    "Login redirects to /dashboard; Protected route enforcement works",
+    "Leaflet map container renders on dashboard",
+    "Readiness gauge updates from 0% -> 6% on checklist tick",
+    "Custom checklist item add works (add-checklist-item-input/button)",
+    "Briefing card renders after Chamonix search with weather-info-block, terrain-info-block, water-sources-block, medical-hazards-block",
+    "Save to Vault + offline-vault-drawer-toggle shows vault-saved-item-card",
+    "Network toggle switches to Offline and shows offline-banner",
+    "Logout clears session and leaves /dashboard",
+    "Theme switcher dropdown opens showing 4 themes (Parisian Chic, Tactical Dark, Deep Jungle, Desert Sand)"
+  ],
+  "failed": [
+    {
+      "area": "Language Vault (UI population)",
+      "issue": "After briefing loaded, phrase-item-row count was 0 at check time. Backend /api/phrases returns full data successfully, so likely a rendering/timing issue where phrase pack fetch hadn't completed or wiring to phrasePack prop is delayed. Needs retest with longer wait (10-20s) after briefing before asserting phrase rows.",
+      "evidence": "curl POST /api/phrases returns valid French pack with 6 emergency phrases; UI locator [data-testid=phrase-item-row] returned count 0 immediately after briefing card appeared.",
+      "priority": "MEDIUM"
+    },
+    {
+      "area": "Emergency menu interaction (during test)",
+      "issue": "After opening offline-vault-drawer, the drawer overlay continued to intercept pointer events; Escape did not close the drawer, blocking subsequent click on emergency-action-im-lost. Drawer may lack an Escape/backdrop close handler (UX polish).",
+      "evidence": "Playwright: 'VaultDrawer subtree intercepts pointer events' retried repeatedly after page.keyboard.press('Escape').",
+      "priority": "LOW"
+    }
+  ],
+  "action_items": [
+    "Verify LanguageVault: ensure Dashboard actually invokes /api/phrases after briefing success and phrasePack state is passed to LanguageVault. If working, this is a test-timing issue only; add a small loading indicator or ensure phrase-item-row appears within ~15s of briefing.",
+    "Add Escape/backdrop-click close handler to VaultDrawer for better UX (nice-to-have, not blocker).",
+    "Documentation nit: review_request lists theme testids as 'theme-option-*' with short slug (e.g. tactical); actual testids are full slug (theme-option-tactical_dark, theme-option-parisian_chic, theme-option-deep_jungle, theme-option-desert_sand). Either update docs or aliases."
+  ],
+  "success_rate": {"backend": "100%", "frontend": "~90%"},
+  "retest_needed": true,
+  "full_testing_deferred": true
+}
