@@ -55,17 +55,17 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
         <div>
           <div className="caption flex items-center gap-1.5">
             <ShieldCheck size={12} style={{ color: "var(--gold)" }} />
-            {inField ? "In the field" : "Packing"} · {members} members · {days} days
+            {inField ? "En ruta" : "Empaque"} · {members} miembros · {days} días
           </div>
           <h3 className="font-serif-display text-xl sm:text-2xl mt-1" style={{ color: "var(--text)" }}>
-            {inField ? `Day ${dayOfTrip} · consumption log` : "Team kit & readiness"}
+            {inField ? `Día ${dayOfTrip} · registro de consumo` : "Kit del equipo y preparación"}
           </h3>
         </div>
         <div className="text-right">
           <div className="font-serif-display text-4xl leading-none" style={{ color: "var(--gold)" }} data-testid="readiness-score-gauge">
             {readiness.overall}%
           </div>
-          <div className="caption mt-1">{inField ? "Packed" : "Readiness"}</div>
+          <div className="caption mt-1">{inField ? "Empacado" : "Preparación"}</div>
         </div>
       </div>
 
@@ -80,29 +80,29 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
             <div className="flex items-center gap-2">
               <CheckCircle2 size={16} style={{ color: "var(--gold)" }} />
               <span className="font-serif-display text-lg" style={{ color: "var(--text)" }}>
-                Kit complete — every item packed
+                Kit completo — todo empacado
               </span>
             </div>
             <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-              Start the journey to switch this list into a live consumption log you can draw down day by day.
+              Inicia el viaje para convertir esta lista en un registro de consumo que puedes ir descontando día a día.
             </p>
             <button onClick={() => setConfirming(true)} className="pill-btn pill-btn-primary w-full mt-3" data-testid="start-journey-button">
-              <Rocket size={14} /> Confirm kit & start journey
+              <Rocket size={14} /> Confirmar kit e iniciar viaje
             </button>
           </div>
         ) : (
           <div className="p-3 rounded mb-5 text-sm" style={{ border: "1px solid var(--border-gold)", color: "var(--text-muted)" }} data-testid="kit-incomplete-note">
-            Pack everything on this list to unlock the journey log — {100 - readiness.overall}% to go
-            {missingCritical.length > 0 && `, including ${missingCritical.length} critical item${missingCritical.length > 1 ? "s" : ""}`}.
+            Empaca todo lo de esta lista para desbloquear el registro del viaje — falta {100 - readiness.overall}%
+            {missingCritical.length > 0 && `, incluidos ${missingCritical.length} artículo${missingCritical.length > 1 ? "s" : ""} crítico${missingCritical.length > 1 ? "s" : ""}`}.
           </div>
         )
       ) : (
         <div className="flex flex-col sm:flex-row gap-2 mb-5">
           <button onClick={() => setEditPacked((v) => !v)} className="pill-btn flex-1" data-testid="toggle-edit-packed-button">
-            <Pencil size={13} /> {editPacked ? "Hide packed editing" : "Adjust packed amounts"}
+            <Pencil size={13} /> {editPacked ? "Ocultar edición de empacado" : "Ajustar cantidades empacadas"}
           </button>
           <button onClick={onEndJourney} className="pill-btn flex-1" style={{ borderColor: "#B94040", color: "#B94040" }} data-testid="end-journey-button">
-            <Undo2 size={13} /> End journey
+            <Undo2 size={13} /> Finalizar viaje
           </button>
         </div>
       )}
@@ -123,7 +123,7 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
         <div className="p-4 rounded mb-5" style={{ border: "1px solid var(--border-gold)" }} data-testid="days-of-supply-panel">
           <div className="caption flex items-center gap-1.5 mb-2">
             <Flame size={12} style={{ color: criticalDays != null && criticalDays < days - 0.05 ? "#B94040" : "var(--gold)" }} />
-            Days of supply remaining
+            Días de suministro restantes
           </div>
           <div className="flex flex-wrap gap-2">
             {supply.slice(0, 6).map((s) => (
@@ -135,14 +135,14 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
               >
                 <div className="text-xs" style={{ color: "var(--text-muted)" }}>{s.name}</div>
                 <div className="font-mono text-sm" style={{ color: s.days < days - 0.05 ? "#B94040" : "var(--text)" }}>
-                  {s.days}d · {s.available}{s.unit} left
+                  {s.days}d · {s.available}{s.unit} restante
                 </div>
               </div>
             ))}
           </div>
           {criticalDays != null && criticalDays < days - 0.05 && (
             <div className="text-sm mt-3" style={{ color: "#B94040" }} data-testid="supply-shortfall-warning">
-              Shortfall: at the team&apos;s current burn rate you run dry before day {days}.
+              Déficit: al ritmo de consumo actual del equipo te quedarás sin existencias antes del día {days}.
             </div>
           )}
         </div>
@@ -150,7 +150,7 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
 
       <div className="flex items-center gap-2 flex-wrap mb-4">
         <button onClick={() => setTab("all")} className="pill-btn" style={{ padding: "0.3rem 0.85rem", fontSize: "0.72rem", backgroundColor: tab === "all" ? "var(--badge)" : "var(--card)" }} data-testid="supply-tab-all">
-          All ({(gear || []).length})
+          Todo ({(gear || []).length})
         </button>
         {cats.map((c) => (
           <button key={c} onClick={() => setTab(c)} className="pill-btn" style={{ padding: "0.3rem 0.85rem", fontSize: "0.72rem", backgroundColor: tab === c ? "var(--badge)" : "var(--card)" }} data-testid={`supply-tab-${c}`}>
@@ -159,7 +159,7 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
         ))}
         {!inField && (
           <button onClick={fillAll} className="pill-btn ml-auto" style={{ padding: "0.3rem 0.85rem", fontSize: "0.72rem" }} data-testid="mark-all-packed-button">
-            <PackageCheck size={12} /> Mark all packed
+            <PackageCheck size={12} /> Marcar todo empacado
           </button>
         )}
       </div>
@@ -189,20 +189,20 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
                     <span className="text-sm font-medium" style={{ color: "var(--text)" }}>{g.name}</span>
                     {g.critical && (
                       <span className="text-[0.6rem] px-1.5 py-0.5 rounded-full" style={{ color: "#B94040", border: "1px solid #B94040" }}>
-                        CRITICAL
+                        CRÍTICO
                       </span>
                     )}
                     {empty && (
                       <span className="text-[0.6rem] px-1.5 py-0.5 rounded-full flex items-center gap-1" style={{ color: "#B94040", border: "1px solid #B94040" }}>
-                        <AlertTriangle size={9} /> OUT
+                        <AlertTriangle size={9} /> AGOTADO
                       </span>
                     )}
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{g.notes}</div>
                   <div className="text-xs mt-1 font-mono" style={{ color: "var(--gold)" }}>
                     {inField
-                      ? `${remaining} of ${packed} ${g.unit} left`
-                      : `Need ${g.required_qty} ${g.unit} · ${g.scaling_basis}`}
+                      ? `${remaining} de ${packed} ${g.unit} restante`
+                      : `Necesitas ${g.required_qty} ${g.unit} · ${g.scaling_basis}`}
                   </div>
                 </div>
 
@@ -210,7 +210,7 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
                   {inField ? (
                     <>
                       <Counter
-                        label="Use"
+                        label="Usar"
                         value={remaining}
                         onMinus={() => bump(g.id, "consumed", step, packed)}
                         onPlus={() => bump(g.id, "consumed", -step)}
@@ -221,7 +221,7 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
                       />
                       {editPacked && (
                         <Counter
-                          label="Packed"
+                          label="Empacado"
                           value={packed}
                           onMinus={() => bump(g.id, "packed", -step)}
                           onPlus={() => bump(g.id, "packed", step)}
@@ -231,7 +231,7 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
                     </>
                   ) : (
                     <Counter
-                      label="Packed"
+                      label="Empacado"
                       value={packed}
                       onMinus={() => bump(g.id, "packed", -step)}
                       onPlus={() => bump(g.id, "packed", step)}
@@ -260,14 +260,14 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
             data-testid="start-journey-modal"
             style={{ borderRadius: "10px 10px 0 0" }}
           >
-            <div className="caption">Confirmation</div>
+            <div className="caption">Confirmación</div>
             <h4 className="font-serif-display text-2xl mt-1" style={{ color: "var(--text)" }}>
-              Start the journey?
+              ¿Iniciar el viaje?
             </h4>
             <p className="text-sm mt-2" style={{ color: "var(--text-muted)" }}>
-              All {(gear || []).length} items are packed for {members} members over {days} days. Starting locks in these
-              amounts as your baseline and switches the Kit into a consumption log — you can draw items down whenever you
-              like, and come back to packing at any time.
+              Los {(gear || []).length} artículos están empacados para {members} miembros durante {days} días. Al iniciar se
+              fijan estas cantidades como tu línea base y el Kit pasa a ser un registro de consumo — puedes descontar
+              artículos cuando quieras y volver al modo de empaque en cualquier momento.
             </p>
             <div className="flex flex-col sm:flex-row gap-2 mt-5">
               <button
@@ -278,10 +278,10 @@ export default function SupplyTracker({ gear, items, setItems, members, days, jo
                 className="pill-btn pill-btn-primary flex-1"
                 data-testid="confirm-start-journey-button"
               >
-                <Rocket size={14} /> Yes, start journey
+                <Rocket size={14} /> Sí, iniciar viaje
               </button>
               <button onClick={() => setConfirming(false)} className="pill-btn flex-1" data-testid="cancel-start-journey-button">
-                Not yet
+                Aún no
               </button>
             </div>
           </div>

@@ -46,6 +46,11 @@ Browsers cannot sample GPS when the app is fully closed. Tracking runs while Exp
 
 - **UI polish (2026-06)**: custom gold scrollbars (webkit + firefox), themed `color-scheme` so native date pickers match dark themes, custom select chevrons, native number spinners replaced by icon steppers (`.step-btn`), styled range slider for the tile radius, and icon-based itinerary reorder/delete controls.
 
+### 2026-06 (Spanish theme, map containment, strict roster)
+- **Spanish vocabulary replaces the French flavour**: Bienvenido, Expediente (dossier), Bóveda (vault), Explorador, theme renamed **Chic Español** (`espanol_chic` key with fallback for the old `parisian_chic` value), landing sample expediente now Picos de Europa / Español · es, map default centre Madrid. Section headings, form labels, validation messages, Kit/Tracker/Language panels and toasts are Spanish. The 6 emergency protocol bodies remain in English (technical field guidance) — pending user decision.
+- **Map containment bug fixed**: Leaflet now lives in a `.eg-map-shell` wrapper (`overflow:hidden` + `isolation:isolate` + `contain:paint` + absolutely-positioned `leaflet-container`), so its internal z-indexes can never paint over the sticky navbar, bottom nav or neighbouring cards while scrolling. Verified by testing_agent across scroll / partial-offscreen / pan / zoom / tab-switch at 390×844 and 1920×800.
+- **Strict roster**: Team size (1–60) is the single source of truth — the roster always renders exactly that many rows (no Add/Remove buttons), and every member needs a name and a role (roles now default to empty) before the dossier can be generated.
+
 ## Prioritized Backlog
 - **P0**: Route Builder — drop/reorder multi-checkpoint waypoints with saved elevation profiles
 - **P0**: Share To Base — read-only dossier + live itinerary link for a base contact

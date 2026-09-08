@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-const THEMES = ["parisian_chic", "tactical_dark", "deep_jungle", "desert_sand"];
+const THEMES = ["espanol_chic", "tactical_dark", "deep_jungle", "desert_sand"];
 export const THEME_LABELS = {
-  parisian_chic: "Parisian Chic",
+  espanol_chic: "Chic Español",
   tactical_dark: "Tactical Dark",
   deep_jungle: "Deep Jungle",
   desert_sand: "Desert Sand",
@@ -12,7 +12,8 @@ const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("eg_theme") || "parisian_chic";
+    const stored = localStorage.getItem("eg_theme");
+    return THEMES.includes(stored) ? stored : "espanol_chic";
   });
 
   useEffect(() => {

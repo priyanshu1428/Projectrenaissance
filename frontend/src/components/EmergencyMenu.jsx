@@ -129,10 +129,10 @@ export default function EmergencyMenu() {
   return (
     <div className="parchment-card p-5 sm:p-8" data-testid="emergency-menu-panel">
       <div className="caption flex items-center gap-1.5">
-        <Siren size={12} style={{ color: "#B94040" }} /> Field Response
+        <Siren size={12} style={{ color: "#B94040" }} /> Respuesta en Campo
       </div>
       <h3 className="font-serif-display text-xl sm:text-2xl mt-1 mb-4" style={{ color: "var(--text)" }}>
-        Emergency Menu
+        Menú de Emergencia
       </h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -201,7 +201,7 @@ export default function EmergencyMenu() {
 
             <div className="p-3.5 rounded mb-5" style={{ border: "1px solid #B94040" }} data-testid="emergency-donts">
               <div className="caption flex items-center gap-1.5 mb-2" style={{ color: "#B94040" }}>
-                <ShieldAlert size={12} /> Do not
+                <ShieldAlert size={12} /> No hagas esto
               </div>
               <ul className="space-y-1.5">
                 {action.donts.map((d, i) => (
@@ -220,7 +220,7 @@ export default function EmergencyMenu() {
                   className="pill-btn pill-btn-primary w-full"
                   style={{ backgroundColor: "#B94040", borderColor: "#B94040", color: "#FBF9F5" }}
                 >
-                  <Radio size={14} /> Broadcast Coordinates
+                  <Radio size={14} /> Transmitir coordenadas
                 </button>
 
                 {broadcast && (
@@ -233,12 +233,12 @@ export default function EmergencyMenu() {
                       <span>No GPS fix available — signal instead: 3 whistle blasts, 3 flashes, repeat every minute.</span>
                     ) : (
                       <>
-                        <div className="caption mb-1">Read this out / send as SMS</div>
+                        <div className="caption mb-1">Lee esto en voz alta / envíalo por SMS</div>
                         <div className="font-mono text-xs break-all">
                           LAT {broadcast.lat.toFixed(5)} · LNG {broadcast.lng.toFixed(5)}
                         </div>
                         <div className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                          Fix time · {new Date(broadcast.at).toLocaleString()}
+                          Hora de la toma · {new Date(broadcast.at).toLocaleString()}
                         </div>
                       </>
                     )}

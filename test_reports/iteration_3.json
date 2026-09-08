@@ -1,0 +1,34 @@
+{
+  "summary": "Frontend regression + focused verification of (1) Leaflet map-escape fix, (2) team-size strict roster, (3) required member details, (4) Spanish vocabulary, (5) theme switching + stale-key fallback, (6) mobile 390x844 audit. All targeted flows PASS. Map is visually contained inside .eg-map-shell across mobile 390x844 and desktop 1920x800 during aggressive scroll, partial-offscreen, pan, zoom and tab-switch scenarios. Roster strictly follows Team size input, no add-member button remains, and 61/0/empty-role are correctly gated. Generated dossier scales to 4 members with '× 4' scaling_basis on the Kit tab. Theme labels, persistence and 'parisian_chic' -> 'espanol_chic' fallback all work. Zero horizontal overflow on any tab or auth page.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "ExpeditionForm / Kit / global", "issues": ["Partial Spanglish: form headings ('Draft the dossier', 'Expedition Setup', 'Roster · N members', 'Notes for the analyst'), button copy ('Analysing place, season & team…', 'Generate expedition dossier', 'Complete N more field(s)'), Kit 'Mark all packed' and toast messages ('Journey started…', 'Back to packing mode') remain in English while headers/tabs/vault are Spanish. Not in the explicit requested Spanish-conversion list, but worth mentioning for consistency."]},
+      {"screen": "ExpeditionForm roster defaults", "issues": ["Newly added member rows default to role='Member' (and the first row to role='Lead'). This satisfies the code-level 'role non-empty' guard automatically, so the 'every member must have a role' UX only bites when the user manually clears the pre-filled role. Consider defaulting role to empty string so the user is truly forced to enter a role. (Requirement said 'EVERY member's details (name + role + experience) are required'.)"]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional: default member role to empty string so the required-role UX is enforced without users noticing the pre-filled default.",
+    "Optional (polish): translate remaining English strings in ExpeditionForm / SupplyTracker / toast messages to Spanish for a consistent Chic Español theme."
+  ],
+  "critical_code_review_comments": [
+    "Dashboard.jsx line ~75/82: toast copy 'Journey started — Kit is now a live consumption log' / 'Back to packing mode' still English while surrounding UI is Spanish (minor).",
+    "ExpeditionForm.jsx: members default role='Member'/'Lead' means the required-role validation only triggers when user clears the value. Consider defaulting to '' so the tracker 'Member details' correctly stays open until the user actively enters roles.",
+    "index.css .eg-map-shell fix is solid: overflow:hidden + isolation:isolate + contain:paint + absolute leaflet-container. Screenshots at 390x844 and 1920x800 after aggressive scroll/pan/zoom/tab-switch show the map painting strictly inside its parchment card."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (per request)", "frontend": "100% of requested scenarios"},
+  "test_credentials": "admin@expedition.com / Guardian2026!",
+  "seed_data_creation": "Generated two live dossiers via /api/expedition/plan during testing (Picos de Europa, Madrid). No IndexedDB seed persisted (nothing saved to vault).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Map-escape fix relies on CSS overflow:hidden + contain:paint on .eg-map-shell. Rect-based checks with getBoundingClientRect() produce false positives because Leaflet's internal tiles have DOM rects that extend outside the container (that's how Leaflet works); those tiles are visually clipped by the shell's overflow:hidden. Use SCREENSHOTS or check computed styles (overflow, isolation, contain), NOT rect intersection, to verify the fix. Login flow: /login, fill email+password inputs (no data-testid on inputs but button[type=submit] works), waits for /dashboard. Plan generation takes ~30-60s; poll body text for 'members' or 'Kit' with ~90s budget. Vault store uses IndexedDB name 'expedition_guardian'. Bottom-nav testids: mobile-tab-plan/dossier/kit/map/field. AI no longer returns 'timeline' field (user writes itinerary manually) — do not flag as missing.",
+  "map_escape_verification": {
+    "shell_styles": {"overflow": "hidden", "isolation": "isolate", "contain": "paint"},
+    "scenarios_verified": ["initial-mobile-390x844", "scroll-down", "scroll-up", "partial-offscreen", "pan", "zoom-in-x2", "post-zoom-scroll", "tab-switch-away-and-back", "desktop-1920x800", "desktop-post-scroll"],
+    "verdict": "Map is visually contained in .eg-map-shell in every scenario; no visible bleed over glass-nav or bottom nav."
+  }
+}

@@ -15,7 +15,7 @@ export default function Landing() {
         <div className="lg:col-span-7 animate-fade-up">
           <div className="caption mb-5 flex items-center gap-2">
             <Compass size={12} style={{ color: "var(--gold)" }} />
-            <span>Established for the Modern Explorer</span>
+            <span>Para el explorador moderno</span>
           </div>
           <h1
             className="font-serif-display font-bold tracking-tight leading-[1.02] text-5xl sm:text-6xl lg:text-7xl"
@@ -40,7 +40,7 @@ export default function Landing() {
           >
             A cartographer&apos;s briefing table for the wild. Distill any destination
             into weather, terrain, water, and hazards — then pack the whole
-            dossier into your pocket for the moment the signal fades.
+            expediente into your pocket for the moment the signal fades.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -50,11 +50,11 @@ export default function Landing() {
               className="pill-btn pill-btn-primary"
               style={{ padding: "0.75rem 1.75rem", fontSize: "0.95rem" }}
             >
-              Begin Preparation
+              Comenzar preparación
               <span aria-hidden>→</span>
             </button>
             <NavLink to="/login" data-testid="landing-cta-login" className="pill-btn">
-              Sign in
+              Entrar
             </NavLink>
           </div>
 
@@ -66,17 +66,17 @@ export default function Landing() {
             <FeatureRow
               icon={<Globe2 size={18} />}
               title="Global Briefings"
-              body="Any city, ridge, or wilderness — distilled by Gemini into a field-ready dossier."
+              body="Any city, ridge, or wilderness — distilled by Gemini into a field-ready expediente."
             />
             <FeatureRow
               icon={<Languages size={18} />}
-              title="Language Vault"
+              title="Bóveda de Frases"
               body="A local phrase pack auto-generated for emergencies, medical, and navigation."
             />
             <FeatureRow
               icon={<MapPinned size={18} />}
-              title="Offline Vault"
-              body="Save briefings & routes. Drop a rescue pin the moment your signal drops."
+              title="Bóveda Offline"
+              body="Save expedientes, cached maps & your GPS trail. Everything works with no signal."
             />
             <FeatureRow
               icon={<ShieldCheck size={18} />}
@@ -91,23 +91,23 @@ export default function Landing() {
             className="parchment-card p-6 sm:p-8 animate-fade-up"
             style={{ animationDelay: "0.15s" }}
           >
-            <div className="caption mb-3">Ω · Sample Dossier</div>
+            <div className="caption mb-3">Ω · Expediente de muestra</div>
             <div
               className="font-serif-display text-2xl mb-1"
               style={{ color: "var(--text)" }}
             >
-              Chamonix, Mont-Blanc Massif
+              Picos de Europa, Cantabria
             </div>
             <div className="text-sm" style={{ color: "var(--text-muted)" }}>
-              45.9237° N · 6.8694° E · Haute-Savoie, France
+              43.1857° N · 4.8517° W · Asturias, España
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
               {[
-                ["Weather", "-8°C → 4°C · Clear"],
-                ["Terrain", "Alpine · 1000–4800m"],
+                ["Weather", "-2°C → 11°C · Clear"],
+                ["Terrain", "Karst · 300–2650 m"],
                 ["Water", "3 reliable sources"],
-                ["Language", "French · fr"],
+                ["Language", "Español · es"],
               ].map(([label, val]) => (
                 <div
                   key={label}

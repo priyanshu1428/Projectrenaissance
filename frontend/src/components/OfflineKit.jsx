@@ -50,17 +50,17 @@ export default function OfflineKit({ plan, onSaveVault, savedId }) {
   return (
     <div className="parchment-card p-5 sm:p-7" data-testid="offline-kit-panel">
       <div className="caption flex items-center gap-1.5">
-        <HardDrive size={12} style={{ color: "var(--gold)" }} /> Offline Kit
+        <HardDrive size={12} style={{ color: "var(--gold)" }} /> Kit Offline
       </div>
       <h3 className="font-serif-display text-xl sm:text-2xl mt-1" style={{ color: "var(--text)" }}>
-        Cache for no-signal use
+        Guardar para uso sin señal
       </h3>
       <p className="text-sm mt-2" style={{ color: "var(--text-muted)" }}>
-        {tiles} map tiles stored on this device.
+        {tiles} teselas de mapa guardadas en este dispositivo.
       </p>
 
       <div className="mt-4">
-        <label className="caption block mb-1.5">Map radius · {radiusKm} km (~{estimate} tiles)</label>
+        <label className="caption block mb-1.5">Radio del mapa · {radiusKm} km (~{estimate} teselas)</label>
         <input
           type="range"
           min={10}
@@ -81,7 +81,7 @@ export default function OfflineKit({ plan, onSaveVault, savedId }) {
         data-testid="download-offline-map-button"
       >
         <CloudDownload size={14} />
-        {progress && progress.done < progress.total ? `Caching ${pct}%` : "Download map region"}
+        {progress && progress.done < progress.total ? `Guardando ${pct}%` : "Descargar región del mapa"}
       </button>
 
       {progress && (
@@ -90,7 +90,7 @@ export default function OfflineKit({ plan, onSaveVault, savedId }) {
             <div className="score-fill" style={{ width: `${pct}%` }} />
           </div>
           <div className="text-xs mt-1.5 font-mono" style={{ color: "var(--text-muted)" }}>
-            {progress.done}/{progress.total} tiles · {progress.failed} failed
+            {progress.done}/{progress.total} teselas · {progress.failed} fallidas
           </div>
         </div>
       )}
@@ -98,10 +98,10 @@ export default function OfflineKit({ plan, onSaveVault, savedId }) {
       <div className="flex flex-col gap-2 mt-4">
         <button onClick={onSaveVault} className="pill-btn w-full" data-testid="save-expedition-vault-button">
           {savedId ? <Check size={14} style={{ color: "var(--gold)" }} /> : <HardDrive size={14} />}
-          {savedId ? "Saved to offline Vault" : "Save dossier to Vault"}
+          {savedId ? "Guardado en la Bóveda" : "Guardar en la Bóveda"}
         </button>
         <button onClick={exportJson} className="pill-btn w-full" data-testid="export-dossier-button">
-          <FileDown size={14} /> Download dossier file
+          <FileDown size={14} /> Descargar archivo del expediente
         </button>
       </div>
     </div>

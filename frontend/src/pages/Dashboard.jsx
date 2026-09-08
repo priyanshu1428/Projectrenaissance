@@ -20,7 +20,7 @@ import EmergencyMenu from "../components/EmergencyMenu";
 
 const TABS = [
   { id: "plan", label: "Plan", icon: Compass },
-  { id: "dossier", label: "Dossier", icon: ClipboardList, gated: true },
+  { id: "dossier", label: "Expediente", icon: ClipboardList, gated: true },
   { id: "kit", label: "Kit", icon: Backpack, gated: true },
   { id: "map", label: "Map", icon: MapIcon, gated: true },
   { id: "field", label: "Field", icon: Siren },
@@ -48,7 +48,7 @@ export default function Dashboard() {
   const goTab = (id) => {
     const t = TABS.find((x) => x.id === id);
     if (t?.gated && locked) {
-      toast.error("Complete the Plan page first — Dossier, Kit and Map unlock once your expedition is generated");
+      toast.error("Completa la página Plan primero — Expediente, Kit y Mapa se desbloquean al generar tu expedición");
       setTab("plan");
       return;
     }
@@ -72,14 +72,14 @@ export default function Dashboard() {
     const next = { phase: "field", startedAt: new Date().toISOString() };
     setJourney(next);
     putMeta(`journey:${gearKey}`, next).catch(() => {});
-    toast.success("Journey started — Kit is now a live consumption log");
+    toast.success("Viaje iniciado — el Kit ahora es un registro de consumo");
   };
 
   const endJourney = () => {
     const next = { phase: "packing" };
     setJourney(next);
     putMeta(`journey:${gearKey}`, next).catch(() => {});
-    toast.success("Back to packing mode");
+    toast.success("De vuelta al modo de empaque");
   };
 
   const updateGear = useCallback(
@@ -133,7 +133,7 @@ export default function Dashboard() {
     if (online) {
       api.post("/expeditions", { plan, phrases }).catch(() => {});
     }
-    toast.success("Dossier stored on-device");
+    toast.success("Expediente guardado en el dispositivo");
   };
 
   const loadEntry = async (entry) => {
@@ -187,19 +187,19 @@ export default function Dashboard() {
         >
           <WifiOff size={14} className="shrink-0 mt-0.5" style={{ color: "#B94040" }} />
           <span>
-            <b>Offline mode.</b> Dossiers, map tiles and your GPS trail all run from on-device storage.
+            <b>Modo offline.</b> Expedientes, teselas del mapa y tu rastro GPS funcionan desde el almacenamiento local.
           </span>
         </div>
       )}
 
       <div className="mb-5">
-        <div className="caption">Bienvenue, {user?.name || "Explorer"}</div>
+        <div className="caption">Bienvenido, {user?.name || "Explorador"}</div>
         <h1 className="font-serif-display text-3xl sm:text-4xl lg:text-5xl mt-1 leading-tight" style={{ color: "var(--text)" }}>
-          {plan ? plan.destination : "Where does the map end?"}
+          {plan ? plan.destination : "¿Dónde termina el mapa?"}
         </h1>
         {!plan && (
           <p className="mt-2 text-sm sm:text-base" style={{ color: "var(--text-muted)" }}>
-            Enter your place, dates and team. The analyst scales every litre, tent and radio to your group.
+            Introduce el lugar, las fechas y el equipo. El analista escala cada litro, tienda y radio a tu grupo.
           </p>
         )}
       </div>
@@ -267,7 +267,7 @@ export default function Dashboard() {
             onEndJourney={endJourney}
           />
         ) : (
-          <Empty onGo={() => setTab("plan")} label="Generate a dossier to get a quantity-scaled kit list." />
+          <Empty onGo={() => setTab("plan")} label="Genera un expediente para obtener una lista de kit escalada." />
         )
       )}
 
@@ -275,14 +275,14 @@ export default function Dashboard() {
         <div className="space-y-4">
           <div className="parchment-card overflow-hidden">
             <div className="p-3 sm:p-4 gold-border-b flex items-center justify-between gap-2 flex-wrap">
-              <div className="caption">Offline Map · Leaflet + OSM</div>
+              <div className="caption">Mapa Offline · Leaflet + OSM</div>
               <span className="text-xs font-mono" style={{ color: online ? "var(--text-muted)" : "#B94040" }}>
                 {online ? `${track.length} fixes` : `OFFLINE · ${track.length} fixes`}
               </span>
             </div>
-            <div style={{ height: "min(62vh, 520px)" }}>
+            <div className="eg-map-shell" style={{ height: "min(58vh, 480px)" }}>
               <LeafletMap
-                center={marker ? [marker.lat, marker.lng] : last ? [last.lat, last.lng] : [48.8566, 2.3522]}
+                center={marker ? [marker.lat, marker.lng] : last ? [last.lat, last.lng] : [40.4168, -3.7038]}
                 marker={marker}
                 rescuePin={!track.length && last ? { ...last, at: new Date(last.t).toISOString() } : null}
                 track={track}
@@ -333,7 +333,7 @@ const Generating = () => (
   <div className="parchment-card p-8 text-center" data-testid="plan-loading">
     <Loader2 size={22} className="animate-spin mx-auto" style={{ color: "var(--gold)" }} />
     <h3 className="font-serif-display text-xl sm:text-2xl mt-3" style={{ color: "var(--text)" }}>
-      Analysing place, season and team
+      Analizando lugar, temporada y equipo
     </h3>
     <p className="text-sm mt-2" style={{ color: "var(--text-muted)" }}>
       Predicting weather for your dates, grading navigation and language difficulty, and scaling every consumable to your headcount.
@@ -343,39 +343,39 @@ const Generating = () => (
 
 const Empty = ({ onGo, label }) => (
   <div className="parchment-card p-7 sm:p-9 text-center" data-testid="dossier-empty-state">
-    <div className="caption mb-2">Awaiting Coordinates</div>
+    <div className="caption mb-2">Esperando coordenadas</div>
     <h3 className="font-serif-display text-xl sm:text-2xl" style={{ color: "var(--text)" }}>
-      {label || "No dossier loaded"}
+      {label || "Ningún expediente cargado"}
     </h3>
     <button onClick={onGo} className="pill-btn pill-btn-primary mt-5" data-testid="goto-plan-button">
-      Set up an expedition
+      Configurar una expedición
     </button>
   </div>
 );
 
 const SavedList = ({ entries, onLoad, onDelete }) => (
   <div className="parchment-card p-5 sm:p-7" data-testid="saved-expeditions-panel">
-    <div className="caption">Offline Vault · {entries.length}</div>
+    <div className="caption">Bóveda Offline · {entries.length}</div>
     <h3 className="font-serif-display text-xl sm:text-2xl mt-1 mb-4" style={{ color: "var(--text)" }}>
-      Saved dossiers
+      Expedientes guardados
     </h3>
     {entries.length === 0 ? (
       <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-        Nothing stored yet. Generate a dossier, then tap &ldquo;Save dossier to Vault&rdquo; to keep it available with no signal.
+        Nada guardado todavía. Genera un expediente y pulsa &ldquo;Guardar en la Bóveda&rdquo; para tenerlo disponible sin señal.
       </p>
     ) : (
       <ul className="space-y-3">
         {entries.map((e) => (
           <li key={e.id} className="p-4 rounded" data-testid="vault-saved-item-card" style={{ backgroundColor: "var(--bg)", border: "1px solid var(--border-gold)" }}>
             <div className="font-serif-display text-lg" style={{ color: "var(--text)" }}>
-              {e.plan?.destination || "Untitled"}
+              {e.plan?.destination || "Sin título"}
             </div>
             <div className="text-xs" style={{ color: "var(--text-muted)" }}>
-              {e.plan?.params?.start_date} → {e.plan?.params?.end_date} · {e.plan?.params?.member_count} members
+              {e.plan?.params?.start_date} → {e.plan?.params?.end_date} · {e.plan?.params?.member_count} miembros
             </div>
             <div className="flex gap-2 mt-3">
               <button onClick={() => onLoad(e)} className="pill-btn flex-1" style={{ padding: "0.35rem 0.85rem", fontSize: "0.75rem" }} data-testid="vault-item-load">
-                Load dossier
+                Cargar expediente
               </button>
               <button onClick={() => onDelete(e.id)} className="pill-btn" style={{ padding: "0.35rem 0.6rem" }} data-testid="vault-item-delete">
                 <Trash2 size={13} />

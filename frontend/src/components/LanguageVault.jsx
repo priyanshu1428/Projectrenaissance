@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { Languages, Copy, Check } from "lucide-react";
 
 const CATEGORIES = [
-  { id: "emergency", label: "Emergency" },
-  { id: "navigation", label: "Navigation" },
-  { id: "medical", label: "Medical" },
+  { id: "emergency", label: "Emergencia" },
+  { id: "navigation", label: "Navegación" },
+  { id: "medical", label: "Médico" },
 ];
 
 export default function LanguageVault({ phrasePack, loading }) {
@@ -23,10 +23,10 @@ export default function LanguageVault({ phrasePack, loading }) {
         <div>
           <div className="caption flex items-center gap-1.5">
             <Languages size={12} style={{ color: "var(--gold)" }} />
-            Language Vault
+            Bóveda de Frases
           </div>
           <h3 className="font-serif-display text-xl sm:text-2xl mt-1" style={{ color: "var(--text)" }}>
-            {phrasePack?.language || "Offline Phrase Pack"}
+            {phrasePack?.language || "Pack de frases offline"}
             {phrasePack?.code && (
               <span className="ml-2 text-sm font-work uppercase tracking-widest" style={{ color: "var(--gold)" }}>
                 {phrasePack.code}
@@ -38,13 +38,13 @@ export default function LanguageVault({ phrasePack, loading }) {
 
       {loading && (
         <div className="text-sm" style={{ color: "var(--text-muted)" }}>
-          Preparing regional phrases...
+          Preparando frases regionales…
         </div>
       )}
 
       {!loading && !phrasePack && (
         <div className="text-sm" style={{ color: "var(--text-muted)" }}>
-          Generate an expedition dossier to auto-build a regional phrase pack for offline use.
+          Genera un expediente para crear automáticamente un pack de frases regionales para uso offline.
         </div>
       )}
 

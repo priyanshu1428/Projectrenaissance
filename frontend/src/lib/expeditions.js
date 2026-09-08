@@ -27,14 +27,14 @@ export const getMeta = (key) => idbGet(STORES.meta, key).then((r) => (r ? r.valu
 export const putMeta = (key, value) => idbPut(STORES.meta, { key, value, at: Date.now() });
 
 export const CATEGORY_LABELS = {
-  navigation: "Navigation",
-  water: "Water",
-  communication: "Communication",
-  medical: "First Aid",
-  shelter: "Shelter",
-  food: "Food & Fuel",
-  clothing: "Clothing",
-  other: "Other",
+  navigation: "Navegación",
+  water: "Agua",
+  communication: "Comunicación",
+  medical: "Primeros Auxilios",
+  shelter: "Refugio",
+  food: "Comida y Combustible",
+  clothing: "Ropa",
+  other: "Otros",
 };
 
 export function computeReadiness(gear, items) {

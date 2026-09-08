@@ -16,7 +16,7 @@ function Protected({ children }) {
   if (user === null)
     return (
       <div className="max-w-md mx-auto px-4 pt-24 text-center">
-        <div className="caption mb-2">Checking dossier...</div>
+        <div className="caption mb-2">Comprobando expediente…</div>
       </div>
     );
   if (!user) return <Navigate to="/login" replace />;

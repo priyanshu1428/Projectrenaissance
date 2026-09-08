@@ -44,7 +44,7 @@ export default function Navbar() {
             >
               Expedition Guardian
             </div>
-            <div className="caption -mt-0.5">Prepare · Operate</div>
+            <div className="caption -mt-0.5">Prepara · Opera</div>
           </div>
         </NavLink>
 
@@ -143,7 +143,7 @@ export default function Navbar() {
               title="Sign out"
             >
               <LogOut size={15} />
-              <span className="hidden sm:inline">Sign out</span>
+              <span className="hidden sm:inline">Salir</span>
             </button>
           ) : (
             <NavLink
@@ -152,7 +152,7 @@ export default function Navbar() {
               className="pill-btn pill-btn-primary"
             >
               <User size={15} />
-              <span>Sign in</span>
+              <span>Entrar</span>
             </NavLink>
           )}
         </div>

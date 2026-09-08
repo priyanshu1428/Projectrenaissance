@@ -20,7 +20,7 @@ export function Login() {
   };
 
   return (
-    <AuthShell title="Welcome back, Explorer" subtitle="Sign in to open your Vault.">
+    <AuthShell title="Bienvenido de nuevo, Explorador" subtitle="Entra para abrir tu Bóveda.">
       <form onSubmit={submit} className="space-y-4" data-testid="login-form">
         <Field
           icon={<Mail size={15} />}
@@ -62,7 +62,7 @@ export function Login() {
           {loading ? "Signing in..." : "Sign in"}
         </button>
         <p className="text-sm text-center" style={{ color: "var(--text-muted)" }}>
-          No dossier yet?{" "}
+          ¿Sin expediente todavía?{" "}
           <NavLink to="/register" data-testid="login-register-link" style={{ color: "var(--gold)" }}>
             Register your expedition
           </NavLink>
@@ -90,7 +90,7 @@ export function Register() {
   };
 
   return (
-    <AuthShell title="Register your Expedition" subtitle="Six minutes to a full dossier.">
+    <AuthShell title="Register your Expedition" subtitle="Seis minutos hasta un expediente completo.">
       <form onSubmit={submit} className="space-y-4" data-testid="register-form">
         <Field
           icon={<User size={15} />}
@@ -138,7 +138,7 @@ export function Register() {
           className="pill-btn pill-btn-primary w-full"
           style={{ padding: "0.75rem" }}
         >
-          {loading ? "Creating dossier..." : "Create dossier"}
+          {loading ? "Creando expediente…" : "Crear expediente"}
         </button>
         <p className="text-sm text-center" style={{ color: "var(--text-muted)" }}>
           Already registered?{" "}
