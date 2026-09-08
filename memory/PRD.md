@@ -37,6 +37,13 @@ Mobile-first web app "Expedition Guardian" — "Prepare Online. Operate Offline.
 ## Known Limitation (disclosed in the UI)
 Browsers cannot sample GPS when the app is fully closed. Tracking runs while Expedition Guardian is open or backgrounded (installed PWA recommended); this is surfaced in the tracker panel.
 
+### 2026-06 (Plan gating, custom itinerary, journey mode, real field protocols)
+- **Plan gating**: Dossier / Kit / Map tabs are locked (lock icon + toast) until an expedition exists. The Plan form has live validation with a "X of 4 required complete" tracker, red inline errors, and requires a name for every roster member.
+- **AI no longer writes a timeline** — replaced by a user-built **Itinerary** (add / edit / reorder / delete days with notes and distance), stored on-device per expedition and editable offline.
+- **Kit journey mode**: while packing you set Packed amounts; at 100% a "Confirm kit & start journey" confirmation appears; after confirming, the Kit becomes a live consumption log (Remaining per item, Use / Undo, OUT flags, day counter, days-of-supply) with an "Adjust packed amounts" toggle and "End journey" escape. Phase persisted in IndexedDB.
+- **Field Response rewritten**: 6 protocols (I'm Lost, Medical Emergency, Low on Water, Lost Supplies, Storm / Whiteout, Injured Member) with detailed correct-order field guidance plus a "Do not" block. Broadcast Coordinates now appears only on I'm Lost and Medical Emergency.
+- Auth verified end-to-end: register → dashboard, sign out, sign back in with the same account.
+
 ## Prioritized Backlog
 - **P0**: Route Builder — drop/reorder multi-checkpoint waypoints with saved elevation profiles
 - **P0**: Share To Base — read-only dossier + live itinerary link for a base contact

@@ -22,6 +22,10 @@ export const getGearState = (id) => idbGet(STORES.gear, id);
 
 export const putGearState = (id, items) => idbPut(STORES.gear, { id, items, at: Date.now() });
 
+export const getMeta = (key) => idbGet(STORES.meta, key).then((r) => (r ? r.value : null));
+
+export const putMeta = (key, value) => idbPut(STORES.meta, { key, value, at: Date.now() });
+
 export const CATEGORY_LABELS = {
   navigation: "Navigation",
   water: "Water",

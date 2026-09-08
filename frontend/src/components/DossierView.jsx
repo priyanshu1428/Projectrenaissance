@@ -1,7 +1,7 @@
 import React from "react";
 import {
   CloudSun, Mountain, Compass, Radio, Languages, Droplet, HeartPulse,
-  AlertTriangle, CalendarRange, Lightbulb, Users,
+  AlertTriangle, Lightbulb, Users,
 } from "lucide-react";
 
 const Section = ({ icon, eyebrow, title, children, testId }) => (
@@ -237,33 +237,6 @@ export default function DossierView({ plan }) {
             </ul>
           </div>
         </div>
-      </Section>
-
-      <Section
-        testId="dossier-timeline"
-        icon={<CalendarRange size={12} style={{ color: "var(--gold)" }} />}
-        eyebrow="Day Plan"
-        title="Timeline"
-      >
-        <ol className="space-y-3">
-          {(plan.timeline || []).map((d, i) => (
-            <li key={i} className="flex gap-4" data-testid={`timeline-day-${i}`}>
-              <span
-                className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-serif-display"
-                style={{ backgroundColor: "var(--badge)", border: "1px solid var(--border-gold)", color: "var(--gold)" }}
-              >
-                {d.day ?? i + 1}
-              </span>
-              <div className="flex-1 pb-3" style={{ borderBottom: "1px solid var(--border-gold)" }}>
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-serif-display text-lg" style={{ color: "var(--text)" }}>{d.focus}</span>
-                  <span className="font-mono text-xs shrink-0" style={{ color: "var(--text-muted)" }}>{d.distance}</span>
-                </div>
-                <div className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>{d.notes}</div>
-              </div>
-            </li>
-          ))}
-        </ol>
       </Section>
 
       <Section

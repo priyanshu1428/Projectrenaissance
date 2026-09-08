@@ -1,15 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { WifiOff, Map as MapIcon, ClipboardList, Backpack, Siren, Compass, Trash2, Loader2 } from "lucide-react";
+import { WifiOff, Map as MapIcon, ClipboardList, Backpack, Siren, Compass, Trash2, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import api, { formatApiErrorDetail } from "../lib/api";
 import { useNetwork } from "../context/NetworkContext";
 import { useAuth } from "../context/AuthContext";
 import { useTracker } from "../context/TrackerContext";
 import {
-  listExpeditions, saveExpedition, deleteExpedition, getGearState, putGearState,
+  listExpeditions, saveExpedition, deleteExpedition, getGearState, putGearState, getMeta, putMeta,
 } from "../lib/expeditions";
 import ExpeditionForm from "../components/ExpeditionForm";
 import DossierView from "../components/DossierView";
+import Itinerary from "../components/Itinerary";
 import SupplyTracker from "../components/SupplyTracker";
 import TrackerPanel from "../components/TrackerPanel";
 import OfflineKit from "../components/OfflineKit";
@@ -19,9 +20,9 @@ import EmergencyMenu from "../components/EmergencyMenu";
 
 const TABS = [
   { id: "plan", label: "Plan", icon: Compass },
-  { id: "dossier", label: "Dossier", icon: ClipboardList },
-  { id: "kit", label: "Kit", icon: Backpack },
-  { id: "map", label: "Map", icon: MapIcon },
+  { id: "dossier", label: "Dossier", icon: ClipboardList, gated: true },
+  { id: "kit", label: "Kit", icon: Backpack, gated: true },
+  { id: "map", label: "Map", icon: MapIcon, gated: true },
   { id: "field", label: "Field", icon: Siren },
 ];
 
@@ -39,8 +40,20 @@ export default function Dashboard() {
   const [saved, setSaved] = useState(null);
   const [vault, setVault] = useState([]);
   const [gearItems, setGearItems] = useState({});
+  const [journey, setJourney] = useState({ phase: "packing" });
 
   const gearKey = saved || "draft";
+
+  const locked = !plan;
+  const goTab = (id) => {
+    const t = TABS.find((x) => x.id === id);
+    if (t?.gated && locked) {
+      toast.error("Complete the Plan page first — Dossier, Kit and Map unlock once your expedition is generated");
+      setTab("plan");
+      return;
+    }
+    setTab(id);
+  };
 
   useEffect(() => {
     listExpeditions().then(setVault).catch(() => {});
@@ -50,7 +63,24 @@ export default function Dashboard() {
     getGearState(gearKey)
       .then((rec) => setGearItems(rec?.items || {}))
       .catch(() => setGearItems({}));
+    getMeta(`journey:${gearKey}`)
+      .then((j) => setJourney(j || { phase: "packing" }))
+      .catch(() => setJourney({ phase: "packing" }));
   }, [gearKey]);
+
+  const startJourney = () => {
+    const next = { phase: "field", startedAt: new Date().toISOString() };
+    setJourney(next);
+    putMeta(`journey:${gearKey}`, next).catch(() => {});
+    toast.success("Journey started — Kit is now a live consumption log");
+  };
+
+  const endJourney = () => {
+    const next = { phase: "packing" };
+    setJourney(next);
+    putMeta(`journey:${gearKey}`, next).catch(() => {});
+    toast.success("Back to packing mode");
+  };
 
   const updateGear = useCallback(
     (updater) => {
@@ -176,17 +206,25 @@ export default function Dashboard() {
 
       {/* Desktop / tablet tabs */}
       <div className="hidden sm:flex items-center gap-2 mb-6 flex-wrap">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className="pill-btn"
-            style={{ backgroundColor: tab === t.id ? "var(--badge)" : "var(--card)", borderColor: tab === t.id ? "var(--gold)" : "var(--border-gold)" }}
-            data-testid={`tab-${t.id}`}
-          >
-            <t.icon size={14} /> {t.label}
-          </button>
-        ))}
+        {TABS.map((t) => {
+          const isLocked = t.gated && locked;
+          return (
+            <button
+              key={t.id}
+              onClick={() => goTab(t.id)}
+              className="pill-btn"
+              style={{
+                backgroundColor: tab === t.id ? "var(--badge)" : "var(--card)",
+                borderColor: tab === t.id ? "var(--gold)" : "var(--border-gold)",
+                opacity: isLocked ? 0.5 : 1,
+              }}
+              title={isLocked ? "Complete the Plan page first" : undefined}
+              data-testid={`tab-${t.id}`}
+            >
+              {isLocked ? <Lock size={13} /> : <t.icon size={14} />} {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {error && (
@@ -210,6 +248,7 @@ export default function Dashboard() {
             <>
               <OfflineKit plan={plan} onSaveVault={handleSaveVault} savedId={saved} />
               <DossierView plan={plan} />
+              <Itinerary storageKey={gearKey} days={days} />
             </>
           )}
         </div>
@@ -217,7 +256,16 @@ export default function Dashboard() {
 
       {tab === "kit" && (
         plan?.gear?.length ? (
-          <SupplyTracker gear={plan.gear} items={gearItems} setItems={updateGear} members={members} days={days} />
+          <SupplyTracker
+            gear={plan.gear}
+            items={gearItems}
+            setItems={updateGear}
+            members={members}
+            days={days}
+            journey={journey}
+            onStartJourney={startJourney}
+            onEndJourney={endJourney}
+          />
         ) : (
           <Empty onGo={() => setTab("plan")} label="Generate a dossier to get a quantity-scaled kit list." />
         )
@@ -261,18 +309,21 @@ export default function Dashboard() {
         style={{ backgroundColor: "var(--card)", borderTop: "1px solid var(--border-gold)", paddingBottom: "env(safe-area-inset-bottom)" }}
         data-testid="mobile-bottom-nav"
       >
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className="flex-1 py-2.5 flex flex-col items-center gap-0.5 transition-colors"
-            style={{ color: tab === t.id ? "var(--gold)" : "var(--text-muted)" }}
-            data-testid={`mobile-tab-${t.id}`}
-          >
-            <t.icon size={18} />
-            <span className="text-[0.62rem] tracking-wide uppercase">{t.label}</span>
-          </button>
-        ))}
+        {TABS.map((t) => {
+          const isLocked = t.gated && locked;
+          return (
+            <button
+              key={t.id}
+              onClick={() => goTab(t.id)}
+              className="flex-1 py-2.5 flex flex-col items-center gap-0.5 transition-colors"
+              style={{ color: tab === t.id ? "var(--gold)" : "var(--text-muted)", opacity: isLocked ? 0.45 : 1 }}
+              data-testid={`mobile-tab-${t.id}`}
+            >
+              {isLocked ? <Lock size={16} /> : <t.icon size={18} />}
+              <span className="text-[0.62rem] tracking-wide uppercase">{t.label}</span>
+            </button>
+          );
+        })}
       </nav>
     </div>
   );

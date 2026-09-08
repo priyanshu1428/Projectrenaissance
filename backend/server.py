@@ -380,9 +380,6 @@ then return this exact JSON schema:
     "factors": ["3-4 risks specific to a team of {member_count} at {experience_level} level"],
     "mitigation": ["3-4 concrete mitigations"]
   }},
-  "timeline": [
-    {{"day": 1, "focus": "short title", "notes": "1-2 sentences", "distance": "e.g. 12 km / +600m"}}
-  ],
   "gear": [
     {{
       "category": "navigation|water|communication|medical|shelter|food|clothing",
@@ -403,7 +400,7 @@ then return this exact JSON schema:
 
 RULES:
 - "periods" must cover the whole trip window (3-5 entries).
-- "timeline" must have exactly {days} entries (cap at 14 if longer, then summarise remaining days in the last entry).
+- Do NOT invent a day-by-day itinerary; the team writes their own.
 - "gear" must contain 20-28 items spread across ALL categories. For consumables (water, food, purification tablets, fuel, batteries) set "consumable": true and give "daily_per_person" so quantities scale with team size AND trip length. For per-head equipment set "per_person" (usually 1). For shared team equipment set "fixed_qty" scaled sensibly to {member_count} people (e.g. 1 stove per 3 people, 1 tent per 2 people, 1 group trauma kit per 6).
 - Exactly one of per_person / fixed_qty / daily_per_person should be non-null per item.
 - Give 4-6 "insights".
