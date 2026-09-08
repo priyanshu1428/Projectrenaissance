@@ -295,14 +295,14 @@ const Counter = ({ label, value, onMinus, onPlus, testId, highlight, minusIcon, 
   <div className="text-center">
     <div className="caption mb-1">{label}</div>
     <div className="flex items-center gap-1.5">
-      <button onClick={onMinus} className="pill-btn" style={{ padding: "0.3rem 0.45rem" }} data-testid={`${testId}-minus`}>
-        {minusIcon || <Minus size={12} />}
+      <button onClick={onMinus} className="step-btn" data-testid={`${testId}-minus`} aria-label={`Decrease ${label}`}>
+        {minusIcon || <Minus size={13} />}
       </button>
-      <span className="font-mono text-sm w-10" style={{ color: highlight ? "var(--gold)" : "var(--text)" }} data-testid={`${testId}-value`}>
+      <span className="font-mono text-sm w-12" style={{ color: highlight ? "var(--gold)" : "var(--text)" }} data-testid={`${testId}-value`}>
         {value}
       </span>
-      <button onClick={onPlus} className="pill-btn" style={{ padding: "0.3rem 0.45rem" }} data-testid={`${testId}-plus`}>
-        {plusIcon || <Plus size={12} />}
+      <button onClick={onPlus} className="step-btn" data-testid={`${testId}-plus`} aria-label={`Increase ${label}`}>
+        {plusIcon || <Plus size={13} />}
       </button>
     </div>
   </div>

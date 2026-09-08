@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CalendarRange, Plus, Trash2, GripVertical } from "lucide-react";
+import { CalendarRange, Plus, Trash2, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 import { getMeta, putMeta } from "../lib/expeditions";
 
 export default function Itinerary({ storageKey, days }) {
@@ -67,9 +67,25 @@ export default function Itinerary({ storageKey, days }) {
               >
                 {i + 1}
               </span>
-              <div className="flex flex-col">
-                <button onClick={() => move(i, -1)} className="text-xs px-1" style={{ color: "var(--text-muted)" }} data-testid={`itinerary-up-${i}`} aria-label="Move up">▲</button>
-                <button onClick={() => move(i, 1)} className="text-xs px-1" style={{ color: "var(--text-muted)" }} data-testid={`itinerary-down-${i}`} aria-label="Move down">▼</button>
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={() => move(i, -1)}
+                  disabled={i === 0}
+                  className="step-btn step-btn-sm"
+                  data-testid={`itinerary-up-${i}`}
+                  aria-label="Move up"
+                >
+                  <ChevronUp size={12} />
+                </button>
+                <button
+                  onClick={() => move(i, 1)}
+                  disabled={i === legs.length - 1}
+                  className="step-btn step-btn-sm"
+                  data-testid={`itinerary-down-${i}`}
+                  aria-label="Move down"
+                >
+                  <ChevronDown size={12} />
+                </button>
               </div>
               <input
                 value={l.title}
@@ -78,7 +94,7 @@ export default function Itinerary({ storageKey, days }) {
                 placeholder="Day title"
                 data-testid={`itinerary-title-${i}`}
               />
-              <button onClick={() => remove(l.id)} className="pill-btn shrink-0" style={{ padding: "0.4rem 0.55rem" }} data-testid={`itinerary-remove-${i}`}>
+              <button onClick={() => remove(l.id)} className="step-btn shrink-0" data-testid={`itinerary-remove-${i}`} aria-label="Delete day">
                 <Trash2 size={13} />
               </button>
             </div>

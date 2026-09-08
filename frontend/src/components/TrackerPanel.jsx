@@ -97,7 +97,7 @@ export default function TrackerPanel() {
       {track.length > 0 && (
         <div className="mt-4">
           <div className="caption mb-2">Trail · {track.length} fixes</div>
-          <ul className="space-y-1.5 max-h-56 overflow-y-auto pr-1" data-testid="track-point-list">
+          <ul className="space-y-1.5 max-h-56 overflow-y-auto pr-1 eg-scroll" data-testid="track-point-list">
             {[...track].reverse().slice(0, 40).map((p, i) => (
               <li key={p.t} className="flex items-baseline justify-between gap-2 text-xs py-1" style={{ borderBottom: "1px solid var(--border-gold)" }} data-testid={`track-point-${i}`}>
                 <span className="font-mono shrink-0" style={{ color: "var(--gold)" }}>#{track.length - i}</span>

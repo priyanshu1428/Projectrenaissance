@@ -167,7 +167,7 @@ export default function EmergencyMenu() {
           onClick={() => setOpen(null)}
         >
           <div
-            className="parchment-card w-full sm:max-w-lg max-h-[88vh] overflow-y-auto p-5 sm:p-6 animate-fade-up"
+            className="parchment-card w-full sm:max-w-lg max-h-[88vh] overflow-y-auto eg-scroll p-5 sm:p-6 animate-fade-up"
             onClick={(e) => e.stopPropagation()}
             data-testid="emergency-modal"
             style={{ borderRadius: "10px 10px 0 0" }}

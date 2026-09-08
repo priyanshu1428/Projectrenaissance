@@ -44,6 +44,8 @@ Browsers cannot sample GPS when the app is fully closed. Tracking runs while Exp
 - **Field Response rewritten**: 6 protocols (I'm Lost, Medical Emergency, Low on Water, Lost Supplies, Storm / Whiteout, Injured Member) with detailed correct-order field guidance plus a "Do not" block. Broadcast Coordinates now appears only on I'm Lost and Medical Emergency.
 - Auth verified end-to-end: register → dashboard, sign out, sign back in with the same account.
 
+- **UI polish (2026-06)**: custom gold scrollbars (webkit + firefox), themed `color-scheme` so native date pickers match dark themes, custom select chevrons, native number spinners replaced by icon steppers (`.step-btn`), styled range slider for the tile radius, and icon-based itinerary reorder/delete controls.
+
 ## Prioritized Backlog
 - **P0**: Route Builder — drop/reorder multi-checkpoint waypoints with saved elevation profiles
 - **P0**: Share To Base — read-only dossier + live itinerary link for a base contact

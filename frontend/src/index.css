@@ -358,6 +358,161 @@ html[data-theme="deep_jungle"] .leaflet-map-antique .leaflet-tile-pane {
   background: linear-gradient(90deg, transparent, var(--border-gold), transparent);
 }
 
+/* ===== Polished form controls ===== */
+:root {
+  color-scheme: light;
+}
+html[data-theme="tactical_dark"],
+html[data-theme="deep_jungle"] {
+  color-scheme: dark;
+}
+
+/* Selects: kill the native arrow, draw our own gold chevron */
+select.chic-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--gold) 50%),
+    linear-gradient(135deg, var(--gold) 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% + 2px), calc(100% - 12px) calc(50% + 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 2.4rem;
+  cursor: pointer;
+}
+
+/* Number inputs: no native spinners (we ship our own steppers) */
+.chic-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.chic-input[type="number"]::-webkit-outer-spin-button,
+.chic-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Date inputs: tint the native picker glyph to match the palette */
+.chic-input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.65;
+  cursor: pointer;
+  filter: sepia(1) saturate(3) hue-rotate(-15deg);
+  transition: opacity 0.2s ease;
+}
+.chic-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Range slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--olive), var(--gold));
+  border: 1px solid var(--border-gold);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 2px solid var(--gold);
+  box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--gold) 22%, transparent);
+}
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--olive), var(--gold));
+  border: 1px solid var(--border-gold);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 2px solid var(--gold);
+}
+
+/* ===== Custom scrollbars ===== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--gold) 55%, transparent) transparent;
+}
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--badge) 60%, transparent);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gold), var(--olive));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Inner scroll panes get a soft fade + inset track */
+.eg-scroll {
+  scrollbar-gutter: stable;
+}
+.eg-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Icon stepper button (used by quantity + reorder controls) */
+.step-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border-gold);
+  background-color: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.15s ease, color 0.18s ease;
+}
+.step-btn:hover:not(:disabled) {
+  background-color: var(--badge);
+  color: var(--gold);
+  transform: translateY(-1px);
+}
+.step-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.94);
+}
+.step-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.step-btn-sm {
+  width: 22px;
+  height: 18px;
+  border-radius: 5px;
+}
+
 /* shadcn base border */
 @layer base {
   * { border-color: hsl(var(--border) / 0.4); }

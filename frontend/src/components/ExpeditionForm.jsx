@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Plus, X, Users, CalendarDays, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, X, Users, CalendarDays, Sparkles, CheckCircle2, AlertCircle, Minus } from "lucide-react";
 
 const TRIP_TYPES = ["Trek / Hike", "Alpine Climb", "Desert Crossing", "Jungle Traverse", "Winter Expedition", "Kayak / River", "Cycling Tour"];
 const LEVELS = ["beginner", "intermediate", "advanced", "professional"];
@@ -152,16 +152,36 @@ export default function ExpeditionForm({ onSubmit, loading, disabled }) {
           <label className="caption mb-1.5 flex items-center gap-1.5">
             <Users size={11} style={{ color: "var(--gold)" }} /> Team size *
           </label>
-          <input
-            type="number"
-            min={1}
-            max={60}
-            value={memberCount}
-            onChange={(e) => setMemberCount(e.target.value)}
-            className="chic-input"
-            style={show("memberCount") ? { borderColor: "#B94040" } : undefined}
-            data-testid="expedition-member-count-input"
-          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMemberCount((v) => Math.max(1, (Number(v) || 1) - 1))}
+              className="step-btn shrink-0"
+              data-testid="member-count-minus"
+              aria-label="Fewer members"
+            >
+              <Minus size={13} />
+            </button>
+            <input
+              type="number"
+              min={1}
+              max={60}
+              value={memberCount}
+              onChange={(e) => setMemberCount(e.target.value)}
+              className="chic-input text-center"
+              style={show("memberCount") ? { borderColor: "#B94040" } : undefined}
+              data-testid="expedition-member-count-input"
+            />
+            <button
+              type="button"
+              onClick={() => setMemberCount((v) => Math.min(60, (Number(v) || 0) + 1))}
+              className="step-btn shrink-0"
+              data-testid="member-count-plus"
+              aria-label="More members"
+            >
+              <Plus size={13} />
+            </button>
+          </div>
           <Err msg={show("memberCount")} testId="error-member-count" />
         </div>
         <div>
