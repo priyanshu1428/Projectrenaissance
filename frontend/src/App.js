@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { NetworkProvider } from "@/context/NetworkContext";
+import { TrackerProvider } from "@/context/TrackerContext";
 import Navbar from "@/components/Navbar";
 import Landing from "@/pages/Landing";
 import { Login, Register } from "@/pages/Auth";
@@ -49,11 +50,13 @@ function App() {
   return (
     <ThemeProvider>
       <NetworkProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <AppShell />
-          </BrowserRouter>
-        </AuthProvider>
+        <TrackerProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <AppShell />
+            </BrowserRouter>
+          </AuthProvider>
+        </TrackerProvider>
       </NetworkProvider>
     </ThemeProvider>
   );

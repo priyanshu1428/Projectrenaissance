@@ -18,14 +18,14 @@ export default function LanguageVault({ phrasePack, loading }) {
   };
 
   return (
-    <div className="parchment-card p-6 sm:p-8" data-testid="language-vault-container">
+    <div className="parchment-card p-5 sm:p-8" data-testid="language-vault-panel">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
           <div className="caption flex items-center gap-1.5">
             <Languages size={12} style={{ color: "var(--gold)" }} />
             Language Vault
           </div>
-          <h3 className="font-serif-display text-2xl mt-1" style={{ color: "var(--text)" }}>
+          <h3 className="font-serif-display text-xl sm:text-2xl mt-1" style={{ color: "var(--text)" }}>
             {phrasePack?.language || "Offline Phrase Pack"}
             {phrasePack?.code && (
               <span className="ml-2 text-sm font-work uppercase tracking-widest" style={{ color: "var(--gold)" }}>
@@ -44,7 +44,7 @@ export default function LanguageVault({ phrasePack, loading }) {
 
       {!loading && !phrasePack && (
         <div className="text-sm" style={{ color: "var(--text-muted)" }}>
-          Search a destination to auto-generate a regional phrase pack.
+          Generate an expedition dossier to auto-build a regional phrase pack for offline use.
         </div>
       )}
 

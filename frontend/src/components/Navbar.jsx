@@ -3,11 +3,14 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { Compass, Wifi, WifiOff, Palette, LogOut, MapPin, User } from "lucide-react";
 import { useTheme, THEME_LABELS } from "../context/ThemeContext";
 import { useNetwork } from "../context/NetworkContext";
+import { useTracker } from "../context/TrackerContext";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { theme, setTheme, themes } = useTheme();
-  const { online, toggle, lastKnown } = useNetwork();
+  const { online, toggle } = useNetwork();
+  const { last } = useTracker();
+  const lastKnown = last ? { lat: last.lat, lng: last.lng } : null;
   const { user, logout } = useAuth();
   const [themeOpen, setThemeOpen] = useState(false);
   const navigate = useNavigate();

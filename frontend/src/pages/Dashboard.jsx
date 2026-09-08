@@ -1,281 +1,338 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Search, Archive, WifiOff } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { WifiOff, Map as MapIcon, ClipboardList, Backpack, Siren, Compass, Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import api, { formatApiErrorDetail } from "../lib/api";
-import { readVault, saveVaultEntry } from "../lib/vault";
 import { useNetwork } from "../context/NetworkContext";
 import { useAuth } from "../context/AuthContext";
-import BriefingCard from "../components/BriefingCard";
+import { useTracker } from "../context/TrackerContext";
+import {
+  listExpeditions, saveExpedition, deleteExpedition, getGearState, putGearState,
+} from "../lib/expeditions";
+import ExpeditionForm from "../components/ExpeditionForm";
+import DossierView from "../components/DossierView";
+import SupplyTracker from "../components/SupplyTracker";
+import TrackerPanel from "../components/TrackerPanel";
+import OfflineKit from "../components/OfflineKit";
 import LanguageVault from "../components/LanguageVault";
 import LeafletMap from "../components/LeafletMap";
-import Readiness from "../components/Readiness";
 import EmergencyMenu from "../components/EmergencyMenu";
-import VaultDrawer from "../components/VaultDrawer";
+
+const TABS = [
+  { id: "plan", label: "Plan", icon: Compass },
+  { id: "dossier", label: "Dossier", icon: ClipboardList },
+  { id: "kit", label: "Kit", icon: Backpack },
+  { id: "map", label: "Map", icon: MapIcon },
+  { id: "field", label: "Field", icon: Siren },
+];
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { online, lastKnown } = useNetwork();
+  const { online } = useNetwork();
+  const { track, last } = useTracker();
 
-  const [query, setQuery] = useState("");
-  const [briefing, setBriefing] = useState(null);
+  const [tab, setTab] = useState("plan");
+  const [plan, setPlan] = useState(null);
   const [phrases, setPhrases] = useState(null);
-  const [loadingBriefing, setLoadingBriefing] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState(false);
   const [loadingPhrases, setLoadingPhrases] = useState(false);
   const [error, setError] = useState("");
-  const [vault, setVault] = useState(readVault());
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(null);
+  const [vault, setVault] = useState([]);
+  const [gearItems, setGearItems] = useState({});
 
-  const [categories, setCategories] = useState([]);
-  const [checked, setChecked] = useState(() => {
-    return JSON.parse(localStorage.getItem("eg_checked") || "{}");
-  });
-  const [extras, setExtras] = useState(() => {
-    return JSON.parse(localStorage.getItem("eg_extras") || "{}");
-  });
+  const gearKey = saved || "draft";
 
   useEffect(() => {
-    localStorage.setItem("eg_checked", JSON.stringify(checked));
-  }, [checked]);
-  useEffect(() => {
-    localStorage.setItem("eg_extras", JSON.stringify(extras));
-  }, [extras]);
-
-  // Load checklist template
-  useEffect(() => {
-    const fetchTemplate = async () => {
-      try {
-        const { data } = await api.get("/checklist/template");
-        setCategories(data.categories || []);
-      } catch {
-        setCategories([]);
-      }
-    };
-    fetchTemplate();
+    listExpeditions().then(setVault).catch(() => {});
   }, []);
 
-  const runSearch = async (e) => {
-    if (e) e.preventDefault();
-    if (!query.trim()) return;
+  useEffect(() => {
+    getGearState(gearKey)
+      .then((rec) => setGearItems(rec?.items || {}))
+      .catch(() => setGearItems({}));
+  }, [gearKey]);
+
+  const updateGear = useCallback(
+    (updater) => {
+      setGearItems((prev) => {
+        const next = typeof updater === "function" ? updater(prev) : updater;
+        putGearState(gearKey, next).catch(() => {});
+        return next;
+      });
+    },
+    [gearKey]
+  );
+
+  const generate = async (params) => {
     setError("");
-    setSaved(false);
-
-    if (!online) {
-      // Offline: search vault
-      const hit = vault.find(
-        (v) =>
-          v.briefing?.destination?.toLowerCase().includes(query.toLowerCase()) ||
-          v.briefing?.region?.toLowerCase().includes(query.toLowerCase())
-      );
-      if (hit) {
-        setBriefing(hit.briefing);
-        setPhrases(hit.phrases);
-        setError("");
-      } else {
-        setError("No matching dossier in your offline Vault.");
-      }
-      return;
-    }
-
-    setLoadingBriefing(true);
-    setLoadingPhrases(true); // start phrase loader immediately so UI shows work-in-progress
-    setBriefing(null);
+    setSaved(null);
+    setLoadingPlan(true);
+    setPlan(null);
     setPhrases(null);
     try {
-      const { data } = await api.post("/briefing", { destination: query });
-      setBriefing(data);
-      setLoadingBriefing(false);
-
-      // fetch phrase pack
+      const { data } = await api.post("/expedition/plan", params);
+      setPlan(data);
+      setTab("dossier");
+      setLoadingPlan(false);
       if (data.language?.primary) {
+        setLoadingPhrases(true);
         try {
           const { data: pp } = await api.post("/phrases", {
-            destination: data.destination,
+            destination: data.destination || params.destination,
             language: data.language.primary,
           });
           setPhrases(pp);
-        } catch (err) {
+        } catch {
           setPhrases(null);
         } finally {
           setLoadingPhrases(false);
         }
-      } else {
-        setLoadingPhrases(false);
       }
     } catch (err) {
       setError(formatApiErrorDetail(err.response?.data?.detail) || err.message);
-      setLoadingBriefing(false);
-      setLoadingPhrases(false);
+      setLoadingPlan(false);
     }
   };
 
-  const handleSaveToVault = () => {
-    if (!briefing) return;
-    saveVaultEntry({ briefing, phrases });
-    setVault(readVault());
-    setSaved(true);
+  const handleSaveVault = async () => {
+    if (!plan) return;
+    const rec = await saveExpedition({ plan, phrases, id: saved || undefined });
+    await putGearState(rec.id, gearItems);
+    setSaved(rec.id);
+    setVault(await listExpeditions());
+    if (online) {
+      api.post("/expeditions", { plan, phrases }).catch(() => {});
+    }
+    toast.success("Dossier stored on-device");
   };
 
-  const handleLoadFromVault = (entry) => {
-    setBriefing(entry.briefing);
+  const loadEntry = async (entry) => {
+    setPlan(entry.plan);
     setPhrases(entry.phrases);
-    setDrawerOpen(false);
-    setQuery(entry.briefing?.destination || "");
+    setSaved(entry.id);
+    setTab("dossier");
+    if (!entry.phrases && online && entry.plan?.language?.primary) {
+      setLoadingPhrases(true);
+      try {
+        const { data } = await api.post("/phrases", {
+          destination: entry.plan.destination,
+          language: entry.plan.language.primary,
+        });
+        setPhrases(data);
+        await saveExpedition({ plan: entry.plan, phrases: data, id: entry.id });
+        setVault(await listExpeditions());
+      } catch {
+        /* stays offline-empty */
+      } finally {
+        setLoadingPhrases(false);
+      }
+    }
+  };
+
+  const removeEntry = async (id) => {
+    await deleteExpedition(id);
+    setVault(await listExpeditions());
+    if (saved === id) setSaved(null);
   };
 
   const marker = useMemo(() => {
-    if (!briefing?.coordinates) return null;
+    if (!plan?.coordinates) return null;
     return {
-      lat: Number(briefing.coordinates.lat),
-      lng: Number(briefing.coordinates.lng),
-      label: briefing.destination,
+      lat: Number(plan.coordinates.lat),
+      lng: Number(plan.coordinates.lng),
+      label: plan.destination,
     };
-  }, [briefing]);
+  }, [plan]);
+
+  const members = plan?.params?.member_count || 1;
+  const days = plan?.params?.duration_days || 1;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 py-5 sm:py-10 pb-28 sm:pb-10">
       {!online && (
         <div
-          className="mb-6 p-3 rounded flex items-center gap-2 text-sm"
-          style={{
-            backgroundColor: "var(--badge)",
-            border: "1px solid #B94040",
-            color: "var(--text)",
-          }}
+          className="mb-4 p-3 rounded flex items-start gap-2 text-sm"
+          style={{ backgroundColor: "var(--badge)", border: "1px solid #B94040", color: "var(--text)" }}
           data-testid="offline-banner"
         >
-          <WifiOff size={14} style={{ color: "#B94040" }} />
+          <WifiOff size={14} className="shrink-0 mt-0.5" style={{ color: "#B94040" }} />
           <span>
-            <b>Offline mode.</b> Searches pull from your local Vault.
-            {lastKnown && (
-              <span className="ml-1">
-                Last known: <span className="font-mono">{lastKnown.lat.toFixed(3)}, {lastKnown.lng.toFixed(3)}</span>
-              </span>
-            )}
+            <b>Offline mode.</b> Dossiers, map tiles and your GPS trail all run from on-device storage.
           </span>
         </div>
       )}
 
-      <div className="mb-8">
+      <div className="mb-5">
         <div className="caption">Bienvenue, {user?.name || "Explorer"}</div>
-        <h1
-          className="font-serif-display text-4xl sm:text-5xl mt-1"
-          style={{ color: "var(--text)" }}
-        >
-          Where does the map end?
+        <h1 className="font-serif-display text-3xl sm:text-4xl lg:text-5xl mt-1 leading-tight" style={{ color: "var(--text)" }}>
+          {plan ? plan.destination : "Where does the map end?"}
         </h1>
-        <p className="mt-2 text-base max-w-2xl" style={{ color: "var(--text-muted)" }}>
-          Search a city, mountain range, or wilderness. We&apos;ll draft the dossier — weather,
-          terrain, water, hazards — and generate a local phrase pack you can carry offline.
-        </p>
+        {!plan && (
+          <p className="mt-2 text-sm sm:text-base" style={{ color: "var(--text-muted)" }}>
+            Enter your place, dates and team. The analyst scales every litre, tent and radio to your group.
+          </p>
+        )}
       </div>
 
-      <form onSubmit={runSearch} className="flex flex-col sm:flex-row gap-3 mb-8">
-        <div className="relative flex-1">
-          <Search
-            size={16}
-            style={{ color: "var(--gold)", position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}
-          />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="e.g. Patagonia · Kyoto · Atlas Mountains"
-            className="chic-input"
-            style={{ paddingLeft: 40 }}
-            data-testid="destination-search-input"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loadingBriefing}
-          data-testid="destination-search-button"
-          className="pill-btn pill-btn-primary"
-          style={{ padding: "0.75rem 1.5rem" }}
-        >
-          {loadingBriefing ? "Preparing dossier..." : "Prepare"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-          className="pill-btn"
-          data-testid="offline-vault-drawer-toggle"
-        >
-          <Archive size={14} /> Vault ({vault.length})
-        </button>
-      </form>
+      {/* Desktop / tablet tabs */}
+      <div className="hidden sm:flex items-center gap-2 mb-6 flex-wrap">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className="pill-btn"
+            style={{ backgroundColor: tab === t.id ? "var(--badge)" : "var(--card)", borderColor: tab === t.id ? "var(--gold)" : "var(--border-gold)" }}
+            data-testid={`tab-${t.id}`}
+          >
+            <t.icon size={14} /> {t.label}
+          </button>
+        ))}
+      </div>
 
       {error && (
-        <div
-          className="mb-6 p-3 rounded text-sm"
-          data-testid="search-error"
-          style={{
-            backgroundColor: "color-mix(in srgb, #B94040 15%, transparent)",
-            color: "#B94040",
-          }}
-        >
+        <div className="mb-5 p-3 rounded text-sm" data-testid="plan-error" style={{ color: "#B94040", border: "1px solid #B94040" }}>
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 space-y-6">
-          {briefing ? (
-            <BriefingCard briefing={briefing} onSaveToVault={handleSaveToVault} saved={saved} />
-          ) : (
-            <EmptyState />
-          )}
+      {tab === "plan" && (
+        <div className="space-y-6">
+          <ExpeditionForm onSubmit={generate} loading={loadingPlan} disabled={!online} />
+          <SavedList entries={vault} onLoad={loadEntry} onDelete={removeEntry} />
+        </div>
+      )}
 
+      {tab === "dossier" && (
+        <div className="space-y-6">
+          {loadingPlan && <Generating />}
+          {!loadingPlan && !plan && <Empty onGo={() => setTab("plan")} />}
+          {plan && (
+            <>
+              <OfflineKit plan={plan} onSaveVault={handleSaveVault} savedId={saved} />
+              <DossierView plan={plan} />
+            </>
+          )}
+        </div>
+      )}
+
+      {tab === "kit" && (
+        plan?.gear?.length ? (
+          <SupplyTracker gear={plan.gear} items={gearItems} setItems={updateGear} members={members} days={days} />
+        ) : (
+          <Empty onGo={() => setTab("plan")} label="Generate a dossier to get a quantity-scaled kit list." />
+        )
+      )}
+
+      {tab === "map" && (
+        <div className="space-y-4">
           <div className="parchment-card overflow-hidden">
-            <div className="p-4 gold-border-b flex items-center justify-between">
-              <div className="caption">Route Planner · Leaflet + OSM</div>
-              {!online && (
-                <span className="text-xs" style={{ color: "#B94040" }}>OFFLINE — cached tiles only</span>
-              )}
+            <div className="p-3 sm:p-4 gold-border-b flex items-center justify-between gap-2 flex-wrap">
+              <div className="caption">Offline Map · Leaflet + OSM</div>
+              <span className="text-xs font-mono" style={{ color: online ? "var(--text-muted)" : "#B94040" }}>
+                {online ? `${track.length} fixes` : `OFFLINE · ${track.length} fixes`}
+              </span>
             </div>
-            <div style={{ height: 420 }}>
+            <div style={{ height: "min(62vh, 520px)" }}>
               <LeafletMap
-                center={marker ? [marker.lat, marker.lng] : [48.8566, 2.3522]}
+                center={marker ? [marker.lat, marker.lng] : last ? [last.lat, last.lng] : [48.8566, 2.3522]}
                 marker={marker}
-                rescuePin={!online ? lastKnown : null}
+                rescuePin={!track.length && last ? { ...last, at: new Date(last.t).toISOString() } : null}
+                track={track}
               />
             </div>
           </div>
-
-          <Readiness
-            categories={categories}
-            checked={checked}
-            setChecked={setChecked}
-            extras={extras}
-            setExtras={setExtras}
-          />
+          <TrackerPanel />
         </div>
+      )}
 
-        <div className="lg:col-span-4 space-y-6">
+      {tab === "field" && (
+        <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+          <div className="space-y-6">
+            <EmergencyMenu />
+            <TrackerPanel />
+          </div>
           <LanguageVault phrasePack={phrases} loading={loadingPhrases} />
-          <EmergencyMenu />
         </div>
-      </div>
+      )}
 
-      <VaultDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        entries={vault}
-        onDelete={(next) => setVault(next)}
-        onLoad={handleLoadFromVault}
-      />
+      {/* Mobile bottom nav */}
+      <nav
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-40 flex"
+        style={{ backgroundColor: "var(--card)", borderTop: "1px solid var(--border-gold)", paddingBottom: "env(safe-area-inset-bottom)" }}
+        data-testid="mobile-bottom-nav"
+      >
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className="flex-1 py-2.5 flex flex-col items-center gap-0.5 transition-colors"
+            style={{ color: tab === t.id ? "var(--gold)" : "var(--text-muted)" }}
+            data-testid={`mobile-tab-${t.id}`}
+          >
+            <t.icon size={18} />
+            <span className="text-[0.62rem] tracking-wide uppercase">{t.label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
 
-function EmptyState() {
-  return (
-    <div className="parchment-card p-8 text-center">
-      <div className="caption mb-2">Awaiting Coordinates</div>
-      <h3 className="font-serif-display text-2xl" style={{ color: "var(--text)" }}>
-        Search a destination to open the dossier
-      </h3>
-      <p className="mt-2 text-sm max-w-md mx-auto" style={{ color: "var(--text-muted)" }}>
-        Gemini will draft a briefing covering weather, terrain, water, and hazards, and auto-generate a regional phrase pack.
+const Generating = () => (
+  <div className="parchment-card p-8 text-center" data-testid="plan-loading">
+    <Loader2 size={22} className="animate-spin mx-auto" style={{ color: "var(--gold)" }} />
+    <h3 className="font-serif-display text-xl sm:text-2xl mt-3" style={{ color: "var(--text)" }}>
+      Analysing place, season and team
+    </h3>
+    <p className="text-sm mt-2" style={{ color: "var(--text-muted)" }}>
+      Predicting weather for your dates, grading navigation and language difficulty, and scaling every consumable to your headcount.
+    </p>
+  </div>
+);
+
+const Empty = ({ onGo, label }) => (
+  <div className="parchment-card p-7 sm:p-9 text-center" data-testid="dossier-empty-state">
+    <div className="caption mb-2">Awaiting Coordinates</div>
+    <h3 className="font-serif-display text-xl sm:text-2xl" style={{ color: "var(--text)" }}>
+      {label || "No dossier loaded"}
+    </h3>
+    <button onClick={onGo} className="pill-btn pill-btn-primary mt-5" data-testid="goto-plan-button">
+      Set up an expedition
+    </button>
+  </div>
+);
+
+const SavedList = ({ entries, onLoad, onDelete }) => (
+  <div className="parchment-card p-5 sm:p-7" data-testid="saved-expeditions-panel">
+    <div className="caption">Offline Vault · {entries.length}</div>
+    <h3 className="font-serif-display text-xl sm:text-2xl mt-1 mb-4" style={{ color: "var(--text)" }}>
+      Saved dossiers
+    </h3>
+    {entries.length === 0 ? (
+      <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+        Nothing stored yet. Generate a dossier, then tap &ldquo;Save dossier to Vault&rdquo; to keep it available with no signal.
       </p>
-    </div>
-  );
-}
+    ) : (
+      <ul className="space-y-3">
+        {entries.map((e) => (
+          <li key={e.id} className="p-4 rounded" data-testid="vault-saved-item-card" style={{ backgroundColor: "var(--bg)", border: "1px solid var(--border-gold)" }}>
+            <div className="font-serif-display text-lg" style={{ color: "var(--text)" }}>
+              {e.plan?.destination || "Untitled"}
+            </div>
+            <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+              {e.plan?.params?.start_date} → {e.plan?.params?.end_date} · {e.plan?.params?.member_count} members
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button onClick={() => onLoad(e)} className="pill-btn flex-1" style={{ padding: "0.35rem 0.85rem", fontSize: "0.75rem" }} data-testid="vault-item-load">
+                Load dossier
+              </button>
+              <button onClick={() => onDelete(e.id)} className="pill-btn" style={{ padding: "0.35rem 0.6rem" }} data-testid="vault-item-delete">
+                <Trash2 size={13} />
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);

@@ -8,12 +8,28 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let cached = null;
+    try {
+      cached = JSON.parse(localStorage.getItem("eg_user") || "null");
+    } catch {
+      cached = null;
+    }
+    const hasToken = !!localStorage.getItem("eg_token");
+    if (cached && hasToken && !navigator.onLine) setUser(cached);
+
     const fetchMe = async () => {
       try {
         const { data } = await api.get("/auth/me");
         setUser(data);
-      } catch {
-        setUser(false);
+        localStorage.setItem("eg_user", JSON.stringify(data));
+      } catch (e) {
+        // no HTTP response => network is down: keep the cached session so the app works offline
+        if (cached && hasToken && !e.response) {
+          setUser(cached);
+        } else {
+          localStorage.removeItem("eg_user");
+          setUser(false);
+        }
       }
     };
     fetchMe();
@@ -24,6 +40,7 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await api.post("/auth/login", { email, password });
       if (data.token) localStorage.setItem("eg_token", data.token);
+      localStorage.setItem("eg_user", JSON.stringify(data));
       setUser(data);
       return true;
     } catch (e) {
@@ -37,6 +54,7 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await api.post("/auth/register", { name, email, password });
       if (data.token) localStorage.setItem("eg_token", data.token);
+      localStorage.setItem("eg_user", JSON.stringify(data));
       setUser(data);
       return true;
     } catch (e) {
@@ -52,6 +70,7 @@ export function AuthProvider({ children }) {
       // ignore
     }
     localStorage.removeItem("eg_token");
+    localStorage.removeItem("eg_user");
     setUser(false);
   };
 

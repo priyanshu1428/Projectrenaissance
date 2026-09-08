@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Siren, Compass, Droplet, HeartPulse, Package, X, Radio } from "lucide-react";
-import { useNetwork } from "../context/NetworkContext";
+import { useTracker } from "../context/TrackerContext";
 
 const ACTIONS = {
   im_lost: {
@@ -52,7 +52,8 @@ const ACTIONS = {
 export default function EmergencyMenu() {
   const [open, setOpen] = useState(null);
   const [broadcast, setBroadcast] = useState(null);
-  const { lastKnown } = useNetwork();
+  const { last } = useTracker();
+  const lastKnown = last ? { lat: last.lat, lng: last.lng, at: new Date(last.t).toISOString() } : null;
 
   const doBroadcast = () => {
     let coords = lastKnown;

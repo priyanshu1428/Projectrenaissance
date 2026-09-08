@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 2 — Full backend + mobile-first frontend testing of Expedition Guardian. Backend: 10/10 pytest passed (auth, expedition plan via Gemini 3 Flash, gear-scaling with member count + days, expedition CRUD, phrases, legacy endpoints, unauth blocking). Frontend @390x844: login → mobile-bottom-nav visible, expedition setup form generates full Gemini dossier in ~30s with ALL sections populated (summary, weather with 3 periods, navigation, language, terrain, communication, water, medical, group-risk, 7 timeline days, 6 insights) with clean text (no [object Object]). Kit tab: 22 gear rows, scaling basis mentions member count '× 6' and days '× 7', packed +/- counters work, 'Mark all packed' pushes readiness 0%→100%, gear state persists across full page reload (via saved vault entry). Save-to-vault works, dossier reloads after refresh. GPS: Ping now logs a fix from injected geolocation (34.15260, 77.57710), last-known-coords + 2 track points render. 4 Emergency protocol actions present. Map (Leaflet) renders. Zero horizontal overflow on ANY tab at 390px. Desktop @1920x1080 correctly shows top pill tabs and hides mobile bottom nav.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "LanguageVault phrase rendering after Load-dossier-from-vault", "issue": "After reload + Load dossier, no [data-testid^='phrase-item-row'] and no [data-testid='language-vault-panel'] were found on the Field tab. Phrases are stored with the vault entry (backend confirms /api/phrases works). Likely one of: (a) LanguageVault component does not expose a testid on its root panel, so it's only discoverable via inner phrase rows which are missing when phrasePack is null/empty, (b) phrasePack was not restored on Load. Same class of issue flagged in iteration_1 as MEDIUM.", "affected_selectors": ["[data-testid^='phrase-item-row']", "[data-testid='language-vault-panel']"]}
+    ],
+    "design_issues": []
+  },
+  "critical_code_review_comments": [
+    "SupplyTracker: after 'Mark all packed', the shortfall-warning element was still present (count=1) even though packed==required for consumables. Verify daysOfSupply in /app/frontend/src/lib/expeditions.js — with packed=required and consumed=0, days_of_supply should equal days (or greater) so criticalDays<days should be false. May be an off-by-one/rounding issue in the first supply entry.",
+    "server.py hardcodes MongoDB ObjectId conversion for JWT sub; if a legacy user has a non-ObjectId id in an older token, /api/auth/me would 500 — not currently exposed but worth defensive try/except.",
+    "Duplicate 'Sign in' buttons on landing (nav + hero) — Playwright get_by_role strict mode fails; consider unique data-testid on each (nav-signin, hero-signin) for test stability.",
+    "server.py CORS uses allow_origins='*' default with allow_credentials=True — browsers reject this combo. Currently harmless because CORS_ORIGINS is probably set in .env, but leaving '*' as fallback is a footgun. Better default to a required env var."
+  ],
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Ensure LanguageVault has a stable root [data-testid='language-vault-panel'] AND that saved-vault Load path restores phrases so phrase-item-row elements render.",
+    "Investigate SupplyTracker.daysOfSupply: after 'Mark all packed' the shortfall warning still shows — verify per-item days-of-supply math for consumables when packed==required and consumed==0.",
+    "(Nice-to-have) Add unique testids to the two 'Sign in' buttons on the landing page."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (new — replaces implicit ad-hoc curl checks with pytest suite)"
+  ],
+  "success_rate": {"backend": "100% (10/10)", "frontend": "~95% (only LanguageVault phrase render + shortfall-warning edge)"},
+  "test_credentials": "admin@expedition.com / Guardian2026! — works; seeded on startup.",
+  "seed_data_creation": "Created 1 saved expedition doc via UI ('Markha Valley Circuit', 2026-07-10→16, 6 members). Cleaned up in backend test via DELETE flow; the UI-created one may remain on the admin account.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All primary review-request scenarios pass at 390x844: dossier generation, no-JSON-leak, gear scaling by member count AND days, packed counters, mark-all-packed → 100%, gear persistence across reload, vault save/load/delete, GPS Ping with injected geolocation, 4 emergency protocols, no horizontal overflow on any mobile tab, desktop layout switches at ≥sm. Two follow-ups (LanguageVault testids + possible false-positive shortfall warning) are minor. Full-offline test (context.set_offline(True) + reload) was not exercised due to time; PWA sw.js exists and vault/gear IndexedDB persistence was verified via normal reload, which strongly implies the offline path works but was not directly asserted.",
+  "rca of the issue": "N/A — no blocking bug found."
+}

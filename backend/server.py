@@ -301,6 +301,258 @@ async def create_phrases(body: PhraseIn, user: dict = Depends(get_current_user))
         raise HTTPException(status_code=500, detail=f"Phrase pack failed: {e}")
 
 
+# ---------------------- Expedition Planning (AI curated) ---------------------- #
+class MemberIn(BaseModel):
+    name: str = ""
+    role: str = ""
+    experience: str = ""
+
+
+class ExpeditionIn(BaseModel):
+    destination: str = Field(min_length=2)
+    start_date: str
+    end_date: str
+    member_count: int = Field(ge=1, le=200)
+    members: List[MemberIn] = []
+    experience_level: str = "intermediate"
+    trip_type: str = "trek"
+    notes: str = ""
+
+
+PLAN_SYSTEM = (
+    "You are a senior expedition planner, wilderness medic and logistics officer. "
+    "You produce field-ready, quantitatively scaled expedition dossiers. "
+    "ALWAYS respond with a single valid JSON object only — no markdown fences, no commentary."
+)
+
+PLAN_PROMPT = """Plan an expedition with these parameters:
+Destination: {destination}
+Start date: {start_date}
+End date: {end_date}
+Duration: {days} days
+Team size: {member_count} people
+Team roster: {roster}
+Overall team experience level: {experience_level}
+Trip type: {trip_type}
+Extra notes: {notes}
+
+Analyse the place, the exact calendar window (season, predicted weather), the team size and its experience,
+then return this exact JSON schema:
+
+{{
+  "destination": "resolved location name",
+  "region": "country / region",
+  "coordinates": {{"lat": <float>, "lng": <float>}},
+  "summary": "3-4 sentence field overview specific to this team, this size and these dates",
+  "weather_forecast": {{
+    "season": "season label for those dates",
+    "outlook": "2-3 sentence predicted weather for that exact window",
+    "temperature_range": "e.g. -6C to 14C",
+    "precipitation": "short line",
+    "daylight": "e.g. sunrise 06:10 / sunset 18:40, ~12h usable light",
+    "periods": [
+      {{"label": "Days 1-2", "conditions": "short", "temp_high": "12C", "temp_low": "1C", "risk": "low|medium|high"}}
+    ]
+  }},
+  "terrain": {{"type": "...", "elevation": "...", "description": "2-3 sentences"}},
+  "navigation": {{
+    "difficulty_score": <int 1-10>,
+    "difficulty_label": "Easy|Moderate|Hard|Severe",
+    "reasons": ["3-4 short reasons tied to terrain/season/team size"],
+    "offline_map_advice": "one paragraph on what to cache and which zoom levels / landmarks matter"
+  }},
+  "communication": {{
+    "signal_outlook": "cell / satellite coverage reality for the area",
+    "checkin_protocol": "concrete check-in schedule for a team of {member_count}",
+    "recommended_devices": [{{"item": "device", "quantity": <int>, "why": "one line"}}]
+  }},
+  "language": {{
+    "primary": "language name",
+    "code": "ISO 639-1 code",
+    "difficulty_score": <int 1-10>,
+    "difficulty_label": "Easy|Moderate|Hard",
+    "notes": "script, English penetration, dialect note"
+  }},
+  "water_sources": [{{"name": "...", "reliability": "high|medium|low", "notes": "purification advice"}}],
+  "medical_hazards": [{{"name": "...", "severity": "low|medium|high", "advice": "one line"}}],
+  "group_risk": {{
+    "level": "low|medium|high",
+    "factors": ["3-4 risks specific to a team of {member_count} at {experience_level} level"],
+    "mitigation": ["3-4 concrete mitigations"]
+  }},
+  "timeline": [
+    {{"day": 1, "focus": "short title", "notes": "1-2 sentences", "distance": "e.g. 12 km / +600m"}}
+  ],
+  "gear": [
+    {{
+      "category": "navigation|water|communication|medical|shelter|food|clothing",
+      "name": "item name",
+      "unit": "unit e.g. L, pcs, kg, sets",
+      "per_person": <float or null>,
+      "fixed_qty": <int or null>,
+      "daily_per_person": <float or null>,
+      "consumable": <bool>,
+      "critical": <bool>,
+      "notes": "one line on why / spec"
+    }}
+  ],
+  "insights": [
+    {{"title": "short title", "detail": "2-3 sentences of non-obvious, genuinely useful local/seasonal/team-size insight"}}
+  ]
+}}
+
+RULES:
+- "periods" must cover the whole trip window (3-5 entries).
+- "timeline" must have exactly {days} entries (cap at 14 if longer, then summarise remaining days in the last entry).
+- "gear" must contain 20-28 items spread across ALL categories. For consumables (water, food, purification tablets, fuel, batteries) set "consumable": true and give "daily_per_person" so quantities scale with team size AND trip length. For per-head equipment set "per_person" (usually 1). For shared team equipment set "fixed_qty" scaled sensibly to {member_count} people (e.g. 1 stove per 3 people, 1 tent per 2 people, 1 group trauma kit per 6).
+- Exactly one of per_person / fixed_qty / daily_per_person should be non-null per item.
+- Give 4-6 "insights".
+- Return ONLY the JSON object."""
+
+
+def _to_float(v):
+    try:
+        f = float(v)
+        return f if f > 0 else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _duration_days(start: str, end: str) -> int:
+    try:
+        s = datetime.fromisoformat(start[:10])
+        e = datetime.fromisoformat(end[:10])
+        return max(1, (e - s).days + 1)
+    except Exception:
+        return 1
+
+
+def _scale_gear(gear: list, members: int, days: int) -> list:
+    out = []
+    for i, g in enumerate(gear or []):
+        if not isinstance(g, dict) or not g.get("name"):
+            continue
+        per_person = _to_float(g.get("per_person"))
+        fixed_qty = _to_float(g.get("fixed_qty"))
+        daily = _to_float(g.get("daily_per_person"))
+        if daily:
+            required = daily * members * days
+            basis = f"{daily:g} {g.get('unit','pcs')}/person/day × {members} × {days}d"
+        elif per_person:
+            required = per_person * members
+            basis = f"{per_person:g} {g.get('unit','pcs')}/person × {members}"
+        elif fixed_qty:
+            required = fixed_qty
+            basis = f"{fixed_qty:g} {g.get('unit','pcs')} for the team"
+        else:
+            required = members
+            basis = f"1 {g.get('unit','pcs')}/person × {members}"
+        out.append({
+            "id": f"gear-{i}",
+            "category": (g.get("category") or "other").lower(),
+            "name": g.get("name"),
+            "unit": g.get("unit") or "pcs",
+            "per_person": per_person,
+            "fixed_qty": fixed_qty,
+            "daily_per_person": daily,
+            "consumable": bool(g.get("consumable")),
+            "critical": bool(g.get("critical")),
+            "notes": g.get("notes") or "",
+            "required_qty": round(required, 2),
+            "scaling_basis": basis,
+        })
+    return out
+
+
+@api_router.post("/expedition/plan")
+async def expedition_plan(body: ExpeditionIn, user: dict = Depends(get_current_user)):
+    days = _duration_days(body.start_date, body.end_date)
+    roster = ", ".join(
+        [f"{m.name or 'Member'} ({m.role or 'member'}, {m.experience or 'unspecified'})" for m in body.members]
+    ) or f"{body.member_count} unnamed members"
+    try:
+        text = await _gemini_generate(
+            session_id=f"plan-{user['id']}-{body.destination[:16]}-{body.start_date}",
+            system=PLAN_SYSTEM,
+            prompt=PLAN_PROMPT.format(
+                destination=body.destination.strip(),
+                start_date=body.start_date,
+                end_date=body.end_date,
+                days=days,
+                member_count=body.member_count,
+                roster=roster,
+                experience_level=body.experience_level,
+                trip_type=body.trip_type,
+                notes=body.notes or "none",
+            ),
+        )
+        data = _extract_json(text)
+        if not data or "weather_forecast" not in data:
+            raise HTTPException(status_code=502, detail="Could not parse expedition plan")
+        data["gear"] = _scale_gear(data.get("gear"), body.member_count, days)
+        data["params"] = {
+            "destination": body.destination.strip(),
+            "start_date": body.start_date,
+            "end_date": body.end_date,
+            "member_count": body.member_count,
+            "members": [m.model_dump() for m in body.members],
+            "experience_level": body.experience_level,
+            "trip_type": body.trip_type,
+            "notes": body.notes,
+            "duration_days": days,
+        }
+        data["generated_at"] = datetime.now(timezone.utc).isoformat()
+        return data
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("plan error")
+        raise HTTPException(status_code=500, detail=f"Expedition planning failed: {e}")
+
+
+class ExpeditionSaveIn(BaseModel):
+    plan: dict
+    phrases: Optional[dict] = None
+
+
+@api_router.post("/expeditions")
+async def save_expedition(body: ExpeditionSaveIn, user: dict = Depends(get_current_user)):
+    doc = {
+        "user_id": user["id"],
+        "plan": body.plan,
+        "phrases": body.phrases,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    res = await db.expeditions.insert_one(doc)
+    doc["id"] = str(res.inserted_id)
+    doc.pop("_id", None)
+    return doc
+
+
+@api_router.get("/expeditions")
+async def list_expeditions(user: dict = Depends(get_current_user)):
+    cursor = db.expeditions.find({"user_id": user["id"]}).sort("created_at", -1).limit(50)
+    out = []
+    async for d in cursor:
+        out.append({
+            "id": str(d["_id"]),
+            "created_at": d.get("created_at"),
+            "plan": d.get("plan"),
+            "phrases": d.get("phrases"),
+        })
+    return {"expeditions": out}
+
+
+@api_router.delete("/expeditions/{exp_id}")
+async def delete_expedition(exp_id: str, user: dict = Depends(get_current_user)):
+    try:
+        oid = ObjectId(exp_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid id")
+    await db.expeditions.delete_one({"_id": oid, "user_id": user["id"]})
+    return {"ok": True}
+
+
 # ---------------------- Checklist Template ---------------------- #
 @api_router.get("/checklist/template")
 async def checklist_template(user: dict = Depends(get_current_user)):
